@@ -1,0 +1,20 @@
+{
+  "rules": [
+    {
+      "name": "Enforce Gemini Model Version",
+      "pattern": "geminiApi\\.getGenerativeModel\\({\\s*model:\\s*[\"'](?!gemini-2\\.0-flash)[\"']",
+      "message": "The Gemini model must be set to 'gemini-2.0-flash' for this project."
+    },
+    {
+      "name": "Protect Environment Files",
+      "pattern": "^(?:.+\\/)*\\.env.*$",
+      "message": "Environment files should not be modified or overwritten.",
+      "disallowModification": true
+    },
+    {
+      "name": "Preserve Default State Values",
+      "pattern": "useState\\((?!undefined).*\\)",
+      "message": "Do not override default values in useState hooks as they are used for testing."
+    }
+  ]
+}
