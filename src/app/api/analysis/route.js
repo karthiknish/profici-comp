@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { GoogleGenerativeAI } from "@google/generative-ai";
+import clientPromise from "@/lib/mongodb"; // Import MongoDB client promise
 import { getSeoPrompt } from "./prompts/seoPrompt.js";
 import { getCompetitorPrompt } from "./prompts/competitorPrompt.js";
 import { getMarketPotentialPrompt } from "./prompts/marketPotentialPrompt.js";
@@ -11,7 +12,6 @@ import { getSocialMediaPrompt } from "./prompts/socialMediaPrompt.js";
 // Helper to safely get text from Gemini response
 const getTextSafe = (result, promptName) => {
   try {
-    // Check more thoroughly for expected structure
     if (
       result &&
       result.response &&
@@ -28,7 +28,6 @@ const getTextSafe = (result, promptName) => {
         return `Error: Invalid text format received from AI for ${promptName}.`;
       }
     }
-    // Log different invalid structures
     if (!result) {
       console.error(
         `Gemini result itself is null/undefined for ${promptName}.`
@@ -49,7 +48,6 @@ const getTextSafe = (result, promptName) => {
       );
       return `Error: AI response structure missing 'text' function for ${promptName}.`;
     }
-    // Fallback for unknown invalid structure
     console.error(
       `Unknown invalid Gemini result structure for ${promptName}:`,
       result
@@ -66,22 +64,24 @@ const getTextSafe = (result, promptName) => {
 };
 
 export async function POST(request) {
-  let analysisResults = {}; // Initialize results object outside try blocks
+  let analysisResults = {};
+  let mongoClient; // Define mongoClient in the outer scope
 
   try {
-    // Outer try for request processing AND Gemini client initialization
     const payload = await request.json();
     const geminiApiKey = process.env.GEMINI_API_KEY;
+    const MONGODB_DB_NAME = process.env.MONGODB_DB_NAME; // Get DB name
 
-    if (!geminiApiKey) {
-      console.error("Configuration error: Gemini API key is missing.");
+    if (!geminiApiKey || !MONGODB_DB_NAME) {
+      // Check both keys
+      const missingVar = !geminiApiKey ? "GEMINI_API_KEY" : "MONGODB_DB_NAME";
+      console.error(`Configuration error: ${missingVar} is missing.`);
       return NextResponse.json(
-        { error: "Configuration error: Gemini API key is missing." },
+        { error: `Configuration error: ${missingVar} is missing.` },
         { status: 500 }
       );
     }
 
-    // Initialize Gemini client inside the try block
     const geminiApi = new GoogleGenerativeAI(geminiApiKey);
     const model = geminiApi.getGenerativeModel({
       model: process.env.GEMINI_MODEL || "gemini-1.5-flash",
@@ -90,16 +90,15 @@ export async function POST(request) {
     const website = payload.website || "the provided website";
     const businessName = payload.detectedName || website;
     const industry = payload.detectedIndustry || "the provided industry";
+    const userEmail = payload.email; // Get email from payload
     const competitors =
       payload.competitors && payload.competitors.length > 0
         ? payload.competitors
         : ["key industry player 1", "key industry player 2"];
     const competitorsString = competitors.join(", ");
-    const insitesReport = payload.insitesReport || {}; // Pass the object
+    const insitesReport = payload.insitesReport || {};
 
     try {
-      // Inner try specifically for Gemini calls and response formatting
-      // --- Define Gemini Prompts using imported functions ---
       const seoPrompt = getSeoPrompt(
         businessName,
         website,
@@ -149,10 +148,8 @@ export async function POST(request) {
         insitesReport
       );
 
-      // --- Run Gemini Prompts ---
       console.log("Sending prompts to Gemini...");
       const results = await Promise.allSettled([
-        // Use Promise.allSettled
         model.generateContent(seoPrompt),
         model.generateContent(competitorPrompt),
         model.generateContent(marketPotentialPrompt),
@@ -163,8 +160,6 @@ export async function POST(request) {
       ]);
       console.log("Received responses (or errors) from Gemini.");
 
-      // --- Format Response ---
-      // Process results from Promise.allSettled
       const [
         seoResult,
         competitorResult,
@@ -175,10 +170,8 @@ export async function POST(request) {
         socialMediaResult,
       ] = results;
 
-      // Helper to check status and get text or error
       const processResult = (result, name) => {
         if (result.status === "fulfilled") {
-          // Add extra check on the fulfilled value before calling getTextSafe
           if (!result.value) {
             console.error(
               `Fulfilled promise for ${name} has null/undefined value.`
@@ -187,9 +180,7 @@ export async function POST(request) {
           }
           return getTextSafe(result.value, name);
         } else {
-          // status === 'rejected'
           console.error(`Promise rejected for ${name}:`, result.reason);
-          // Try to get a more specific error message if available
           const errorMessage =
             result.reason?.message ||
             String(result.reason) ||
@@ -215,22 +206,44 @@ export async function POST(request) {
         ),
         searchTrends: processResult(trendsResult, "Search Trends"),
         socialMedia: processResult(socialMediaResult, "Social Media"),
+        // Keep detectedName/businessName if needed by frontend
         detectedName: businessName,
         businessName: businessName,
       };
 
-      // Check if any individual result contains an error string
       const hasErrors = Object.values(analysisResults).some(
         (value) => typeof value === "string" && value.startsWith("Error:")
       );
       if (hasErrors) {
         console.warn("One or more analysis sections failed:", analysisResults);
-        // Optionally, you could return a different status or structure if partial failure is critical
       }
+
+      // --- Save Report to MongoDB ---
+      try {
+        mongoClient = await clientPromise;
+        const db = mongoClient.db(MONGODB_DB_NAME);
+        const reportsCollection = db.collection("analysis_reports");
+
+        const reportDocument = {
+          userId: userEmail, // Use email as a user identifier
+          website: website,
+          businessName: businessName,
+          industry: industry,
+          competitors: competitors, // Save the array
+          reportData: analysisResults, // Save the full results object
+          createdAt: new Date(),
+          insitesReportId: payload.insitesReport?.id || null, // Optionally save the Insites ID
+        };
+
+        await reportsCollection.insertOne(reportDocument);
+        console.log(">>> Analysis report saved to MongoDB");
+      } catch (dbError) {
+        console.error("MongoDB Error saving analysis report:", dbError);
+        // Log the error but proceed to return the results to the user
+      }
+      // --- End Save Report ---
     } catch (processingError) {
-      // Catch errors during prompt definition or result processing (less likely now with allSettled)
       console.error("Error during analysis processing:", processingError);
-      // Ensure the error message is always a string
       const errorMessage =
         processingError instanceof Error
           ? processingError.message
@@ -245,9 +258,7 @@ export async function POST(request) {
       );
     }
 
-    // If the inner try succeeded (even with partial errors handled by processResult), return the results
     console.log("Analysis process completed. Returning results.");
-    // Explicitly try to stringify before returning to catch serialization errors
     try {
       JSON.stringify(analysisResults); // Test serialization
     } catch (serializationError) {
@@ -265,15 +276,14 @@ export async function POST(request) {
     }
     return NextResponse.json(analysisResults);
   } catch (error) {
-    // Outer catch for general request processing errors (e.g., payload parsing, Gemini init)
     console.error("Critical error in analysis API (outer catch):", error);
-    // Simplify the error message drastically to ensure JSON compatibility
-    return NextResponse.json(
-      {
-        error:
-          "An unexpected server error occurred during analysis request processing.",
-      },
-      { status: 500 }
-    );
+    let errorMessage = "Failed to process analysis request.";
+    if (error instanceof Error) {
+      errorMessage += ` Reason: ${error.message}`;
+    } else {
+      errorMessage += ` Reason: ${String(error)}`;
+    }
+    console.error("Critical error object in analysis API:", error);
+    return NextResponse.json({ error: errorMessage }, { status: 500 });
   }
 }

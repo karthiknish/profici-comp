@@ -3,6 +3,7 @@
 import React, { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label"; // Added for email form
 import {
   Card,
   CardContent,
@@ -10,7 +11,7 @@ import {
   CardTitle,
   CardFooter,
 } from "@/components/ui/card";
-import { MessageSquare, X, Send, Bot, Loader2 } from "lucide-react";
+import { MessageSquare, X, Send, Bot, Loader2, Mail } from "lucide-react"; // Added Mail icon
 import { motion, AnimatePresence } from "framer-motion";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { toast } from "sonner";
@@ -26,20 +27,61 @@ const ChatbotWidget = () => {
   ]);
   const [inputValue, setInputValue] = useState("");
   const [isBotTyping, setIsBotTyping] = useState(false); // State for typing indicator
+  const [email, setEmail] = useState("");
+  const [emailSubmitted, setEmailSubmitted] = useState(false);
+  const [isSubmittingEmail, setIsSubmittingEmail] = useState(false);
   const scrollAreaRef = useRef(null);
 
   const toggleChat = () => {
     setIsOpen(!isOpen);
-    // Optional: Reset messages when opening
-    // if (!isOpen) {
-    //   setMessages([{ sender: 'bot', text: 'Hello! How can I help you learn about Profici today?' }]);
-    //   setInputValue('');
-    //   setIsBotTyping(false);
-    // }
+    // Reset email state if chat is closed and reopened, unless already submitted
+    if (isOpen && !emailSubmitted) {
+      setEmail("");
+      setIsSubmittingEmail(false);
+    }
   };
 
   const handleInputChange = (e) => {
     setInputValue(e.target.value);
+  };
+
+  const handleEmailChange = (e) => {
+    setEmail(e.target.value);
+  };
+
+  // Basic email validation
+  const isValidEmail = (email) => {
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+  };
+
+  const handleEmailSubmit = async (e) => {
+    e.preventDefault();
+    if (!isValidEmail(email) || isSubmittingEmail) return;
+
+    setIsSubmittingEmail(true);
+    try {
+      const response = await fetch("/api/chatbot/save-email", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Failed to save email.");
+      }
+
+      // Email saved successfully
+      setEmailSubmitted(true);
+      toast.success("Email submitted!", {
+        description: "You can now start chatting.",
+      });
+    } catch (error) {
+      console.error("Error submitting email:", error);
+      toast.error("Submission Error", { description: error.message });
+    } finally {
+      setIsSubmittingEmail(false);
+    }
   };
 
   // Scroll to bottom when messages change or bot starts typing
@@ -137,7 +179,7 @@ const ChatbotWidget = () => {
                 <div className="flex items-center space-x-2">
                   <Bot className="h-5 w-5 text-primary" />
                   <CardTitle className="text-base font-semibold">
-                    Profici Assistant
+                    {emailSubmitted ? "Profici Assistant" : "Start Chat"}
                   </CardTitle>
                 </div>
                 <Button
@@ -149,74 +191,121 @@ const ChatbotWidget = () => {
                   <X className="h-4 w-4" />
                 </Button>
               </CardHeader>
-              <CardContent className="flex-grow p-0 overflow-hidden">
-                {/* Use Shadcn ScrollArea */}
-                <ScrollArea ref={scrollAreaRef} className="h-full p-4">
-                  <div className="space-y-4">
-                    {messages.map((msg, index) => (
-                      <div
-                        key={index}
-                        className={`flex ${
-                          msg.sender === "user"
-                            ? "justify-end"
-                            : "justify-start"
-                        }`}
-                      >
-                        <div
-                          className={`max-w-[75%] rounded-lg px-3 py-2 text-sm ${
-                            msg.sender === "user"
-                              ? "bg-primary text-primary-foreground"
-                              : "bg-muted" // Keep bg-muted for bot bubble background
-                          }`}
-                        >
-                          {/* Render bot messages using MarkdownRenderer */}
-                          {msg.sender === "bot" ? (
-                            <div className="prose prose-sm dark:prose-invert max-w-none">
-                              {" "}
-                              {/* Add prose styles */}
-                              <MarkdownRenderer content={msg.text} />
-                            </div>
-                          ) : (
-                            msg.text // Render user messages as plain text
-                          )}
-                        </div>
-                      </div>
-                    ))}
-                    {/* Typing Indicator */}
-                    {isBotTyping && (
-                      <div className="flex justify-start">
-                        <div className="max-w-[75%] rounded-lg px-3 py-2 text-sm bg-muted flex items-center space-x-1">
-                          <span className="text-muted-foreground">Typing</span>
-                          <Loader2 className="h-3 w-3 animate-spin text-muted-foreground" />
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                </ScrollArea>
-              </CardContent>
-              <CardFooter className="p-4 border-t">
-                <form
-                  onSubmit={handleSendMessage}
-                  className="flex w-full items-center space-x-2"
-                >
-                  <Input
-                    type="text"
-                    placeholder="Type your message..."
-                    value={inputValue}
-                    onChange={handleInputChange}
-                    className="flex-grow"
-                    autoComplete="off"
-                    disabled={isBotTyping} // Disable input while bot is typing
-                  />
-                  <Button
-                    type="submit"
-                    size="icon"
-                    disabled={!inputValue.trim() || isBotTyping} // Disable button too
+              {/* Conditional Rendering: Email Form or Chat */}
+              {!emailSubmitted ? (
+                <CardContent className="flex-grow p-4 flex flex-col justify-center items-center">
+                  <form
+                    onSubmit={handleEmailSubmit}
+                    className="w-full space-y-4"
                   >
-                    <Send className="h-4 w-4" />
-                  </Button>
-                </form>
-              </CardFooter>
+                    <p className="text-sm text-center text-muted-foreground mb-4">
+                      Please enter your email to start chatting with our
+                      assistant.
+                    </p>
+                    <div className="space-y-1">
+                      <Label htmlFor="email" className="sr-only">
+                        Email
+                      </Label>
+                      <Input
+                        id="email"
+                        type="email"
+                        placeholder="your.email@example.com"
+                        value={email}
+                        onChange={handleEmailChange}
+                        required
+                        disabled={isSubmittingEmail}
+                      />
+                    </div>
+                    <Button
+                      type="submit"
+                      className="w-full"
+                      disabled={!isValidEmail(email) || isSubmittingEmail}
+                    >
+                      {isSubmittingEmail ? (
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      ) : (
+                        <Mail className="mr-2 h-4 w-4" />
+                      )}
+                      Start Chat
+                    </Button>
+                  </form>
+                </CardContent>
+              ) : (
+                <>
+                  {/* Chat Messages Area */}
+                  <CardContent className="flex-grow p-0 overflow-hidden">
+                    <ScrollArea ref={scrollAreaRef} className="h-full p-4">
+                      <div className="space-y-4">
+                        {messages.map((msg, index) => (
+                          <div
+                            key={index}
+                            className={`flex ${
+                              msg.sender === "user"
+                                ? "justify-end"
+                                : "justify-start"
+                            }`}
+                          >
+                            <div
+                              className={`max-w-[75%] rounded-lg px-3 py-2 text-sm ${
+                                msg.sender === "user"
+                                  ? "bg-primary text-primary-foreground"
+                                  : "bg-muted" // Keep bg-muted for bot bubble background
+                              }`}
+                            >
+                              {/* Render bot messages using MarkdownRenderer */}
+                              {msg.sender === "bot" ? (
+                                <div className="prose prose-sm dark:prose-invert max-w-none">
+                                  {" "}
+                                  {/* Add prose styles */}
+                                  <MarkdownRenderer content={msg.text} />
+                                </div>
+                              ) : (
+                                msg.text // Render user messages as plain text
+                              )}
+                            </div>
+                          </div>
+                        ))}
+                        {/* Typing Indicator */}
+                        {isBotTyping && (
+                          <div className="flex justify-start">
+                            <div className="max-w-[75%] rounded-lg px-3 py-2 text-sm bg-muted flex items-center space-x-1">
+                              <span className="text-muted-foreground">
+                                Typing
+                              </span>
+                              <Loader2 className="h-3 w-3 animate-spin text-muted-foreground" />
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </ScrollArea>
+                  </CardContent>
+
+                  {/* Chat Input Area */}
+                  <CardFooter className="p-4 border-t">
+                    <form
+                      onSubmit={handleSendMessage}
+                      className="flex w-full items-center space-x-2"
+                    >
+                      <Input
+                        type="text"
+                        placeholder="Type your message..."
+                        value={inputValue}
+                        onChange={handleInputChange}
+                        className="flex-grow"
+                        autoComplete="off"
+                        disabled={isBotTyping} // Disable input while bot is typing
+                      />
+                      <Button
+                        type="submit"
+                        size="icon"
+                        disabled={!inputValue.trim() || isBotTyping} // Disable button too
+                      >
+                        <Send className="h-4 w-4" />
+                      </Button>
+                    </form>
+                  </CardFooter>
+                </>
+              )}
             </Card>
           </motion.div>
         )}
