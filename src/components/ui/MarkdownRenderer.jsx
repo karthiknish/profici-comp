@@ -24,7 +24,8 @@ const markdownComponents = {
     <ol className="list-decimal pl-5 space-y-1 text-sm mb-3" {...props} />
   ),
   li: ({ node, ...props }) => (
-    <li className="text-muted-foreground" {...props} />
+    // Use default text color (text-foreground) for better contrast
+    <li className="" {...props} />
   ),
   blockquote: ({ node, ...props }) => (
     <blockquote
