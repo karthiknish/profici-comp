@@ -526,7 +526,7 @@ export default function HomePage() {
                 <Card className="h-full shadow-lg bg-background">
                   <CardContent className="pt-6">
                     <p className="text-muted-foreground mb-4 italic">
-                      "{testimonial.quote}"
+                      &ldquo;{testimonial.quote}&rdquo;
                     </p>
                     <div className="flex items-center mt-4 pt-4 border-t border-border">
                       <Avatar className="w-10 h-10 mr-3">
