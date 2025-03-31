@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react"; // Import useRef
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
@@ -26,9 +26,11 @@ import {
   LineChart as LineChartIcon,
   ArrowRight,
   BrainCircuit,
-  Loader2, // Keep import in case used elsewhere, though button logic removed
+  Play, // Add Play icon
+  Pause, // Add Pause icon
 } from "lucide-react";
 import { toast } from "sonner";
+import { cn } from "@/lib/utils"; // Import cn
 
 // Animation variants for sections
 const sectionVariants = {
@@ -53,29 +55,34 @@ const itemVariants = {
 export default function HomePage() {
   const router = useRouter();
   const [email, setEmail] = useState("");
-  // Removed isSubmitting state
+  const videoRef = useRef(null); // Ref for the video element
+  const [isPlaying, setIsPlaying] = useState(true); // State to track video playback
 
   const handleGetStarted = (e) => {
-    // No longer async
     e.preventDefault();
-    // Basic email format validation
     if (!email || !/\S+@\S+\.\S+/.test(email)) {
       toast.warning("Please enter a valid email address.");
       return;
     }
-
-    // Only save to localStorage and navigate
     try {
       localStorage.setItem("businessAnalysisEmail", email);
       console.log("Email saved to localStorage.");
-      // Only navigate if localStorage save was successful
       router.push("/analysis");
     } catch (storageError) {
       console.error("Error saving email to localStorage:", storageError);
       toast.error("Could not save email. Please try again.");
-      // Do NOT navigate if saving failed
-      // Optionally still navigate or show a more persistent error
-      // router.push("/analysis");
+    }
+  };
+
+  // Function to toggle play/pause
+  const togglePlayPause = () => {
+    if (videoRef.current) {
+      if (isPlaying) {
+        videoRef.current.pause();
+      } else {
+        videoRef.current.play();
+      }
+      setIsPlaying(!isPlaying);
     }
   };
 
@@ -177,7 +184,7 @@ export default function HomePage() {
       name: "Maria Garcia",
       title: "E-commerce Manager",
       quote:
-        "The SEO analysis pinpointed technical issues we&apos;d missed for months. Fixing them led to a noticeable traffic increase.",
+        "The SEO analysis pinpointed technical issues we'd missed for months. Fixing them led to a noticeable traffic increase.",
       initials: "MG",
     },
     {
@@ -227,11 +234,7 @@ export default function HomePage() {
               Testimonials
             </Link>
           </nav>
-          <div className="flex flex-1 items-center justify-end space-x-4">
-            <Button asChild>
-              <Link href="/analysis">Launch Tool</Link>
-            </Button>
-          </div>
+          {/* Removed Launch Tool button div */}
         </div>
       </motion.nav>
 
@@ -284,9 +287,12 @@ export default function HomePage() {
           </motion.div>
           <motion.div
             variants={itemVariants}
-            className="lg:w-1/2 flex justify-center mt-10 lg:mt-0 relative"
+            className="lg:w-1/2 w-full flex justify-center mt-10 lg:mt-0 relative"
           >
-            <div className="relative w-full max-w-lg aspect-square">
+            {/* Make the outer container square and relative, add z-10 */}
+            <div className="relative w-full max-w-md aspect-square z-10">
+              {" "}
+              {/* Adjusted max-w and aspect-square, added z-10 */}
               <motion.div
                 initial={{ opacity: 0, scale: 0.5, rotate: -20 }}
                 animate={{ opacity: 1, scale: 1, rotate: 0 }}
@@ -309,17 +315,39 @@ export default function HomePage() {
                 }}
                 className="absolute -top-10 -right-10 w-64 h-64 bg-secondary/10 rounded-full blur-2xl"
               />
+              {/* Video container */}
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.8, duration: 0.5 }}
-                className="relative w-full aspect-video bg-muted rounded-lg flex items-center justify-center shadow-xl border overflow-hidden"
+                className="relative w-full h-full bg-muted rounded-lg flex items-center justify-center shadow-xl  " // Use h-full to fill aspect-square parent
               >
-                <div className="flex space-x-2 p-4">
-                  <div className="w-1/3 h-32 bg-primary/30 rounded animate-pulse delay-100"></div>
-                  <div className="w-1/3 h-32 bg-primary/50 rounded animate-pulse delay-300"></div>
-                  <div className="w-1/3 h-32 bg-primary/70 rounded animate-pulse delay-500"></div>
-                </div>
+                <video
+                  ref={videoRef} // Add ref
+                  autoPlay
+                  loop
+                  playsInline
+                  className="absolute top-0 left-0 w-full h-full object-cover rounded-lg" // Use object-cover and absolute positioning with rounded corners
+                  // Removed controls attribute
+                >
+                  <source
+                    src="https://profici.co.uk/wp-content/uploads/2024/12/Unlock-Business-Potential-Cash-Flow.mp4"
+                    type="video/mp4"
+                  />
+                  Your browser does not support the video tag.
+                </video>
+                {/* Play/Pause Button */}
+                <button
+                  onClick={togglePlayPause}
+                  className="absolute inset-0 flex items-center justify-center  z-10 bg-black/30 hover:bg-black/50 transition-opacity duration-300 opacity-0 hover:opacity-100 focus:opacity-100" // Removed bg-black, used bg-black/30 hover:bg-black/50
+                  aria-label={isPlaying ? "Pause video" : "Play video"}
+                >
+                  {isPlaying ? (
+                    <Pause className="w-16 h-16 text-white opacity-80" />
+                  ) : (
+                    <Play className="w-16 h-16 text-white opacity-80" />
+                  )}
+                </button>
               </motion.div>
             </div>
           </motion.div>
@@ -386,44 +414,6 @@ export default function HomePage() {
           </h2>
         </div>
         <div className="grid md:grid-cols-3 gap-8 text-center relative">
-          {/* Removed dashed lines between steps */}
-          {/* <div className="hidden md:block absolute top-8 left-1/3 right-1/3 h-0.5 -translate-y-4">
-            <svg
-              width="100%"
-              height="2"
-              preserveAspectRatio="none"
-              className="text-border"
-            >
-              <line
-                x1="0"
-                y1="1"
-                x2="100%"
-                y2="1"
-                stroke="currentColor"
-                strokeWidth="1"
-                strokeDasharray="4 4"
-              />
-            </svg>
-          </div> */}
-          {/* <div className="hidden md:block absolute top-8 left-2/3 right-0 h-0.5 -translate-y-4">
-            <svg
-              width="100%"
-              height="2"
-              preserveAspectRatio="none"
-              className="text-border"
-            >
-              <line
-                x1="0"
-                y1="1"
-                x2="100%"
-                y2="1"
-                stroke="currentColor"
-                strokeWidth="1"
-                strokeDasharray="4 4"
-              />
-            </svg>
-          </div> */}
-
           {howItWorksSteps.map((step, index) => (
             <motion.div
               key={step.step}
@@ -431,9 +421,6 @@ export default function HomePage() {
               custom={index}
               className="relative z-10 flex flex-col items-center"
             >
-              <div className="w-16 h-16 bg-primary rounded-full flex items-center justify-center mx-auto mb-4 text-primary-foreground font-bold text-2xl shadow-lg">
-                {step.step}
-              </div>
               {/* Use Card component for steps */}
               <Card className="h-full text-center bg-background/70">
                 <CardHeader>
