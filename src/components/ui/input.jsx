@@ -5,10 +5,16 @@ import { cn } from "@/lib/utils"
 function Input({
   className,
   type,
+  asChild, // Destructure asChild here
   ...props
 }) {
+  // Note: The asChild prop is typically used with Slot components,
+  // which isn't the standard pattern for a basic input.
+  // We destructure it here primarily to prevent it from being passed
+  // down to the native <input> element and causing the React warning.
+  // If complex composition is needed later, consider using Slot.
   return (
-    (<input
+    <input
       type={type}
       data-slot="input"
       className={cn(
@@ -17,7 +23,8 @@ function Input({
         "aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive",
         className
       )}
-      {...props} />)
+      {...props}
+    />
   );
 }
 
