@@ -8,9 +8,25 @@ import { getRecommendationsPrompt } from "./prompts/recommendationsPrompt.js";
 import { getTrendsPrompt } from "./prompts/trendsPrompt.js";
 import { getSocialMediaPrompt } from "./prompts/socialMediaPrompt.js";
 
+// Helper to safely get text from Gemini response
+const getTextSafe = (result) => {
+  try {
+    // Check if response and text function exist
+    if (result && result.response && typeof result.response.text === 'function') {
+      return result.response.text();
+    }
+    console.error("Invalid Gemini result structure:", result);
+    return "Error: Invalid AI response structure.";
+  } catch (e) {
+    console.error("Error getting text from Gemini response:", e, result);
+    return `Error: Could not retrieve text from AI response (${e.message}).`;
+  }
+};
+
+
 export async function POST(request) {
   try {
-    // Expect the new payload structure
+    // Outer try for request processing
     const payload = await request.json();
     const geminiApiKey = process.env.GEMINI_API_KEY;
 
@@ -23,113 +39,129 @@ export async function POST(request) {
 
     const geminiApi = new GoogleGenerativeAI(geminiApiKey);
     const model = geminiApi.getGenerativeModel({
-      model: process.env.GEMINI_MODEL || "gemini-1.5-flash", // Default to flash if not set
+      model: process.env.GEMINI_MODEL || "gemini-1.5-flash",
     });
 
-    // Extract relevant data from the payload, using Insites data primarily
     const website = payload.website || "the provided website";
-    const businessName = payload.detectedName || website; // Use detected name or website
+    const businessName = payload.detectedName || website;
     const industry = payload.detectedIndustry || "the provided industry";
-    // Use competitors from payload, provide a default if empty/missing
     const competitors =
       payload.competitors && payload.competitors.length > 0
         ? payload.competitors
-        : ["key industry player 1", "key industry player 2"]; // Default to 2 placeholders if none provided
-    const competitorsString = competitors.join(", "); // Use the actual competitors list or default
-    const insitesReportJson = JSON.stringify(
-      payload.insitesReport || {},
-      null,
-      2
-    ); // Stringify Insites data for context
+        : ["key industry player 1", "key industry player 2"];
+    const competitorsString = competitors.join(", ");
+    const insitesReport = payload.insitesReport || {}; // Pass the object
 
-    // --- Define Gemini Prompts using imported functions ---
-    const seoPrompt = getSeoPrompt(
-      businessName,
-      website,
-      industry,
-      competitorsString,
-      insitesReportJson
-    );
-    const competitorPrompt = getCompetitorPrompt(
-      businessName,
-      website,
-      industry,
-      competitors,
-      competitorsString,
-      insitesReportJson
-    );
-    const marketPotentialPrompt = getMarketPotentialPrompt(
-      businessName,
-      website,
-      industry,
-      insitesReportJson
-    );
-    const marketCapPrompt = getMarketCapPrompt(
-      businessName,
-      website,
-      industry,
-      insitesReportJson
-    );
-    const recommendationsPrompt = getRecommendationsPrompt(
-      businessName,
-      website,
-      industry,
-      competitorsString,
-      insitesReportJson
-    );
-    const trendsPrompt = getTrendsPrompt(
-      businessName,
-      website,
-      industry,
-      competitorsString,
-      insitesReportJson
-    );
-    const socialMediaPrompt = getSocialMediaPrompt(
-      businessName,
-      website,
-      industry,
-      competitorsString,
-      insitesReportJson
-    );
+    let analysisResults = {}; // Initialize results object
 
-    // --- Run Gemini Prompts ---
-    const [
-      seoResult,
-      competitorResult,
-      marketPotentialResult,
-      marketCapResult,
-      recommendationsResult,
-      trendsResult,
-      socialMediaResult,
-    ] = await Promise.all([
-      model.generateContent(seoPrompt),
-      model.generateContent(competitorPrompt),
-      model.generateContent(marketPotentialPrompt),
-      model.generateContent(marketCapPrompt),
-      model.generateContent(recommendationsPrompt),
-      model.generateContent(trendsPrompt),
-      model.generateContent(socialMediaPrompt),
-    ]);
+    try {
+      // Inner try specifically for Gemini calls and response formatting
+      // --- Define Gemini Prompts using imported functions ---
+      const seoPrompt = getSeoPrompt(
+        businessName,
+        website,
+        industry,
+        competitorsString,
+        insitesReport
+      );
+      const competitorPrompt = getCompetitorPrompt(
+        businessName,
+        website,
+        industry,
+        competitors,
+        competitorsString,
+        insitesReport
+      );
+      const marketPotentialPrompt = getMarketPotentialPrompt(
+        businessName,
+        website,
+        industry,
+        insitesReport
+      );
+      const marketCapPrompt = getMarketCapPrompt(
+        businessName,
+        website,
+        industry,
+        insitesReport
+      );
+      const recommendationsPrompt = getRecommendationsPrompt(
+        businessName,
+        website,
+        industry,
+        competitorsString,
+        insitesReport
+      );
+      const trendsPrompt = getTrendsPrompt(
+        businessName,
+        website,
+        industry,
+        competitorsString,
+        insitesReport
+      );
+      const socialMediaPrompt = getSocialMediaPrompt(
+        businessName,
+        website,
+        industry,
+        competitorsString,
+        insitesReport
+      );
 
-    // --- Format Response ---
-    const analysisResults = {
-      seoAnalysis: seoResult.response.text(),
-      competitorAnalysis: competitorResult.response.text(),
-      marketPotential: marketPotentialResult.response.text(),
-      marketCap: marketCapResult.response.text(),
-      recommendations: recommendationsResult.response.text(),
-      searchTrends: trendsResult.response.text(),
-      socialMedia: socialMediaResult.response.text(),
-      // Include detectedName in the response so the report can use it
-      detectedName: businessName,
-      businessName: businessName, // Also include as businessName for consistency if needed
-    };
+      // --- Run Gemini Prompts ---
+      console.log("Sending prompts to Gemini..."); // Log before sending
+      const [
+        seoResult,
+        competitorResult,
+        marketPotentialResult,
+        marketCapResult,
+        recommendationsResult,
+        trendsResult,
+        socialMediaResult,
+      ] = await Promise.all([
+        model.generateContent(seoPrompt),
+        model.generateContent(competitorPrompt),
+        model.generateContent(marketPotentialPrompt),
+        model.generateContent(marketCapPrompt),
+        model.generateContent(recommendationsPrompt),
+        model.generateContent(trendsPrompt),
+        model.generateContent(socialMediaPrompt),
+      ]);
+      console.log("Received responses from Gemini."); // Log after receiving
 
+      // --- Format Response ---
+      analysisResults = {
+        seoAnalysis: getTextSafe(seoResult),
+        competitorAnalysis: getTextSafe(competitorResult),
+        marketPotential: getTextSafe(marketPotentialResult),
+        marketCap: getTextSafe(marketCapResult),
+        recommendations: getTextSafe(recommendationsResult),
+        searchTrends: getTextSafe(trendsResult),
+        socialMedia: getTextSafe(socialMediaResult),
+        detectedName: businessName,
+        businessName: businessName,
+      };
+    } catch (geminiError) {
+      // Catch errors specifically from Gemini calls or response formatting
+      console.error("Error during Gemini processing:", geminiError);
+      // Return a JSON error response immediately
+      return NextResponse.json(
+        {
+          error: `Failed during AI analysis generation: ${
+            geminiError.message || "Unknown Gemini Error"
+          }`,
+        },
+        { status: 500 }
+      );
+    }
+
+    // If the inner try succeeded, return the results
+    console.log("Successfully generated analysis results."); // Log success
     return NextResponse.json(analysisResults);
   } catch (error) {
-    console.error("Error in analysis API:", error);
+    // Outer catch for general request processing errors (e.g., payload parsing)
+    console.error("Error in analysis API (outer catch):", error);
+    // Ensure this also returns JSON
     return NextResponse.json(
-      { error: error.message || "Failed to generate analysis" },
+      { error: error.message || "Failed to process analysis request" },
       { status: 500 }
     );
   }
