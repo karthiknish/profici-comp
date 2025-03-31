@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react"; // Import useRef
+import { useState, useEffect, useRef, useCallback } from "react"; // Import useCallback
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
@@ -128,70 +128,74 @@ export default function AnalysisPage() {
         clearTimeout(pollingTimeoutRef.current);
       }
     };
-  }, [insitesReportId, isLoading, submittedFormData]); // Dependencies
+  }, [insitesReportId, isLoading, submittedFormData, fetchGeminiAnalysis]); // Added fetchGeminiAnalysis
 
   // --- Function to fetch Gemini Analysis (now called directly from poll) ---
-  const fetchGeminiAnalysis = async (originalFormData, insitesData) => {
-    // Renamed formData param for clarity
-    console.log(">>> fetchGeminiAnalysis started."); // Kept LOG
-    // Ensure isLoading is true when this starts, although it should be
-    if (!isLoading) setIsLoading(true);
-    try {
-      // Construct payload using Insites data primarily
-      const payloadForGemini = {
-        email: originalFormData.email, // Keep the user's email
-        website: insitesData?.report?.domain,
-        detectedName: insitesData?.report?.meta?.detected_name,
-        detectedPhone: insitesData?.report?.contact_details?.phones?.[0],
-        detectedEmail: insitesData?.report?.contact_details?.emails?.[0],
-        detectedIndustry: insitesData?.report?.meta?.primary_industry,
-        // Include the full Insites report for context within the API route
-        insitesReport: insitesData?.report,
-        // Add competitors from the original form data
-        competitors: originalFormData.competitors,
-      };
+  // Wrap in useCallback
+  const fetchGeminiAnalysis = useCallback(
+    async (originalFormData, insitesData) => {
+      // Renamed formData param for clarity
+      console.log(">>> fetchGeminiAnalysis started.");
+      // Ensure isLoading is true when this starts, although it should be
+      if (!isLoading) setIsLoading(true);
+      try {
+        // Construct payload using Insites data primarily
+        const payloadForGemini = {
+          email: originalFormData.email, // Keep the user's email
+          website: insitesData?.report?.domain,
+          detectedName: insitesData?.report?.meta?.detected_name,
+          detectedPhone: insitesData?.report?.contact_details?.phones?.[0],
+          detectedEmail: insitesData?.report?.contact_details?.emails?.[0],
+          detectedIndustry: insitesData?.report?.meta?.primary_industry,
+          // Include the full Insites report for context within the API route
+          insitesReport: insitesData?.report,
+          // Add competitors from the original form data
+          competitors: originalFormData.competitors,
+        };
 
-      console.log(
-        ">>> Calling /api/analysis with derived payload:",
-        payloadForGemini
-      ); // Updated LOG
-      const analysisResponse = await fetch("/api/analysis", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payloadForGemini), // Send the new payload
-      });
-      console.log(">>> /api/analysis fetch call returned."); // Kept LOG
+        console.log(
+          ">>> Calling /api/analysis with derived payload:",
+          payloadForGemini
+        ); // Updated LOG
+        const analysisResponse = await fetch("/api/analysis", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payloadForGemini), // Send the new payload
+        });
+        console.log(">>> /api/analysis fetch call returned."); // Kept LOG
 
-      if (!analysisResponse.ok) {
-        console.error(
-          ">>> /api/analysis response not OK:",
-          analysisResponse.status
-        ); // ADDED LOG
-        const errorData = await analysisResponse.json();
-        throw new Error(
-          errorData.error || "Failed to generate Gemini analysis"
+        if (!analysisResponse.ok) {
+          console.error(
+            ">>> /api/analysis response not OK:",
+            analysisResponse.status
+          ); // ADDED LOG
+          const errorData = await analysisResponse.json();
+          throw new Error(
+            errorData.error || "Failed to generate Gemini analysis"
+          );
+        }
+
+        console.log(">>> /api/analysis response OK. Parsing JSON..."); // ADDED LOG
+        const analysisData = await analysisResponse.json();
+        console.log(">>> /api/analysis JSON parsed successfully."); // ADDED LOG
+        setAnalysisResults(analysisData);
+        // submittedFormData is already set
+      } catch (err) {
+        console.error("Error during Gemini analysis fetch:", err);
+        setError(
+          err.message || "An error occurred while generating the analysis"
         );
+      } finally {
+        console.log(
+          ">>> fetchGeminiAnalysis finally block: Setting isLoading=false."
+        ); // ADDED LOG
+        setIsLoading(false); // Final loading state update
+        // setPollingStatus(null); // Removed
+        // setInsitesReportId(null); // Decide if report ID should be cleared after analysis
       }
-
-      console.log(">>> /api/analysis response OK. Parsing JSON..."); // ADDED LOG
-      const analysisData = await analysisResponse.json();
-      console.log(">>> /api/analysis JSON parsed successfully."); // ADDED LOG
-      setAnalysisResults(analysisData);
-      // submittedFormData is already set
-    } catch (err) {
-      console.error("Error during Gemini analysis fetch:", err);
-      setError(
-        err.message || "An error occurred while generating the analysis"
-      );
-    } finally {
-      console.log(
-        ">>> fetchGeminiAnalysis finally block: Setting isLoading=false."
-      ); // ADDED LOG
-      setIsLoading(false); // Final loading state update
-      // setPollingStatus(null); // Removed
-      // setInsitesReportId(null); // Decide if report ID should be cleared after analysis
-    }
-  };
+    },
+    [isLoading]
+  ); // Add dependencies used inside useCallback (like isLoading)
 
   // --- Original handleSubmit ---
   const handleSubmit = async (formData) => {

@@ -43,8 +43,7 @@ export const metadata = {
   creator: author,
   publisher: author,
 
-  // Viewport
-  viewport: "width=device-width, initial-scale=1",
+  // Viewport - Removed from here
 
   // Robots / Indexing
   robots: {
@@ -134,7 +133,8 @@ export const viewport = {
     { media: "(prefers-color-scheme: light)", color: "white" },
     { media: "(prefers-color-scheme: dark)", color: "black" }, // Adjust dark theme color if needed
   ],
-  // viewport: "width=device-width, initial-scale=1", // Already in metadata, keep one source of truth or consolidate here if preferred
+  width: "device-width", // Add viewport properties here
+  initialScale: 1,
 };
 
 
