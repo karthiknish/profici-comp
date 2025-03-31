@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { GoogleGenerativeAI } from "@google/generative-ai";
-import clientPromise from "@/lib/mongodb"; // Import MongoDB client promise
+import { connectToDatabase } from "@/lib/mongodb"; // Import the connection function
 import { getSeoPrompt } from "./prompts/seoPrompt.js";
 import { getCompetitorPrompt } from "./prompts/competitorPrompt.js";
 import { getMarketPotentialPrompt } from "./prompts/marketPotentialPrompt.js";
@@ -8,6 +8,16 @@ import { getMarketCapPrompt } from "./prompts/marketCapPrompt.js";
 import { getRecommendationsPrompt } from "./prompts/recommendationsPrompt.js";
 import { getTrendsPrompt } from "./prompts/trendsPrompt.js";
 import { getSocialMediaPrompt } from "./prompts/socialMediaPrompt.js";
+// Removed fs and path imports as file saving is removed
+
+// Helper function to get the base URL for internal API calls
+const getBaseUrl = () => {
+  if (process.env.NEXT_PUBLIC_VERCEL_URL) {
+    return `https://${process.env.NEXT_PUBLIC_VERCEL_URL}`;
+  }
+  // Fallback for local development
+  return process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+};
 
 // Helper to safely get text from Gemini response
 const getTextSafe = (result, promptName) => {
@@ -63,9 +73,50 @@ const getTextSafe = (result, promptName) => {
   }
 };
 
+// Removed sanitizeFilename helper function as it's no longer needed
+
+// Helper function to fetch Apollo data for a single domain (removed file saving)
+const fetchApolloDataForDomain = async (domain) => {
+  if (!domain) {
+    console.log(">>> Skipping Apollo fetch: No domain provided.");
+    return null;
+  }
+  try {
+    console.log(`>>> Calling /api/apollo-info for domain: ${domain}`);
+    const apolloResponse = await fetch(`${getBaseUrl()}/api/apollo-info`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ domain: domain }),
+    });
+
+    if (!apolloResponse.ok) {
+      console.warn(
+        `Apollo info fetch failed for ${domain} with status: ${apolloResponse.status}`
+      );
+      return null; // Return null on failure
+    } else {
+      const apolloResult = await apolloResponse.json(); // Get the full result from our endpoint
+      const apolloData = apolloResult.apolloData; // Extract the data part
+      console.log(
+        `>>> Apollo data fetched successfully for ${domain} (or null if not found).`
+      );
+
+      // Removed file saving logic
+
+      return apolloData; // Return the extracted data
+    }
+  } catch (apolloError) {
+    console.error(
+      `Error calling Apollo info API route for ${domain}:`,
+      apolloError
+    );
+    return null; // Return null on error
+  }
+};
+
 export async function POST(request) {
   let analysisResults = {};
-  let mongoClient; // Define mongoClient in the outer scope
+  // No need for mongoClient variable here
 
   try {
     const payload = await request.json();
@@ -84,27 +135,53 @@ export async function POST(request) {
 
     const geminiApi = new GoogleGenerativeAI(geminiApiKey);
     const model = geminiApi.getGenerativeModel({
-      model: process.env.GEMINI_MODEL || "gemini-1.5-flash",
+      model: process.env.GEMINI_MODEL || "gemini-2.0-flash",
     });
 
-    const website = payload.website || "the provided website";
-    const businessName = payload.detectedName || website;
+    const website = payload.website || null; // Use null if not provided
+    const businessName = payload.detectedName || website; // Fallback to website if name missing
     const industry = payload.detectedIndustry || "the provided industry";
     const userEmail = payload.email; // Get email from payload
     const competitors =
       payload.competitors && payload.competitors.length > 0
         ? payload.competitors
-        : ["key industry player 1", "key industry player 2"];
+        : ["key industry player 1", "key industry player 2"]; // Keep default competitors
     const competitorsString = competitors.join(", ");
     const insitesReport = payload.insitesReport || {};
 
+    // --- Fetch Apollo Data for primary business ---
+    const apolloData = await fetchApolloDataForDomain(website);
+    // --- End Fetch Apollo Data ---
+
+    // --- Fetch Apollo Data for Competitors ---
+    let competitorsApolloData = [];
+    if (
+      competitors &&
+      competitors.length > 0 &&
+      competitors[0] !== "key industry player 1"
+    ) {
+      // Avoid fetching for default placeholders
+      console.log(">>> Fetching Apollo data for competitors...");
+      competitorsApolloData = await Promise.all(
+        competitors.map((domain) => fetchApolloDataForDomain(domain)) // This now also saves files
+      );
+      console.log(">>> Competitor Apollo data fetching complete.");
+    } else {
+      console.log(
+        ">>> Skipping Apollo fetch for competitors (default or empty list)."
+      );
+    }
+    // --- End Fetch Apollo Data for Competitors ---
+
     try {
+      // Pass apolloData and competitorsApolloData to prompt functions
       const seoPrompt = getSeoPrompt(
         businessName,
         website,
         industry,
         competitorsString,
-        insitesReport
+        insitesReport,
+        apolloData // Pass primary apolloData
       );
       const competitorPrompt = getCompetitorPrompt(
         businessName,
@@ -112,40 +189,48 @@ export async function POST(request) {
         industry,
         competitors,
         competitorsString,
-        insitesReport
+        insitesReport,
+        apolloData, // Pass primary apolloData
+        competitorsApolloData // Pass competitor apolloData array
       );
       const marketPotentialPrompt = getMarketPotentialPrompt(
         businessName,
         website,
         industry,
-        insitesReport
+        insitesReport,
+        apolloData // Pass primary apolloData
       );
       const marketCapPrompt = getMarketCapPrompt(
         businessName,
         website,
         industry,
-        insitesReport
+        insitesReport,
+        apolloData // Pass primary apolloData
       );
       const recommendationsPrompt = getRecommendationsPrompt(
         businessName,
         website,
         industry,
         competitorsString,
-        insitesReport
+        insitesReport,
+        apolloData, // Pass primary apolloData
+        competitorsApolloData // Pass competitor apolloData array
       );
       const trendsPrompt = getTrendsPrompt(
         businessName,
         website,
         industry,
         competitorsString,
-        insitesReport
+        insitesReport,
+        apolloData // Pass primary apolloData
       );
       const socialMediaPrompt = getSocialMediaPrompt(
         businessName,
         website,
         industry,
         competitorsString,
-        insitesReport
+        insitesReport,
+        apolloData // Pass primary apolloData
       );
 
       console.log("Sending prompts to Gemini...");
@@ -209,6 +294,8 @@ export async function POST(request) {
         // Keep detectedName/businessName if needed by frontend
         detectedName: businessName,
         businessName: businessName,
+        // Include fetched Apollo data in the response
+        apolloData: apolloData,
       };
 
       const hasErrors = Object.values(analysisResults).some(
@@ -220,8 +307,7 @@ export async function POST(request) {
 
       // --- Save Report to MongoDB ---
       try {
-        mongoClient = await clientPromise;
-        const db = mongoClient.db(MONGODB_DB_NAME);
+        const { db } = await connectToDatabase(); // Connect and get the db object
         const reportsCollection = db.collection("analysis_reports");
 
         const reportDocument = {

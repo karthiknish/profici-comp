@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import BusinessAnalysisForm from "@/components/BusinessAnalysisForm";
 import BusinessAnalysisReport from "@/components/BusinessAnalysisReport";
+import AnalysisHeader from "@/components/AnalysisHeader"; // Import the new header component
 import { Toaster, toast } from "sonner";
 import { Loader2 } from "lucide-react";
 
@@ -338,14 +339,21 @@ export default function AnalysisPage() {
         )}
 
         <AnimatePresence mode="wait">
-          {analysisResults && submittedFormData && !isLoading && !error && (
+          {/* Simplified condition: Removed !isLoading check */}
+          {analysisResults && submittedFormData && !error && (
             <motion.div
               key="report"
               variants={containerVariants}
               initial="hidden"
               animate="visible"
-              exit="exit"
+              exit="exit" // Restore exit animation
             >
+              {/* Render AnalysisHeader if analysisResults exist; header handles null apolloData */}
+              <AnalysisHeader
+                apolloData={analysisResults?.apolloData}
+                businessName={submittedFormData?.businessName}
+                website={submittedFormData?.website}
+              />
               <BusinessAnalysisReport
                 results={analysisResults}
                 industry={submittedFormData.industry}

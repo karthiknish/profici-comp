@@ -13,7 +13,7 @@ import {
 import { Lightbulb } from "lucide-react";
 // Remove parsing utils as we render the whole block
 // import { ... } from "@/utils/parsing";
-import MarkdownRenderer from "@/components/ui/MarkdownRenderer";
+import MarkdownRenderer from "@/components/ui/MarkdownRenderer"; // Restore MarkdownRenderer
 
 const StrategicRecommendationsSection = ({ data }) => {
   // No parsing needed here anymore, just pass the raw data prop
@@ -41,7 +41,7 @@ const StrategicRecommendationsSection = ({ data }) => {
             <p>Recommendation data not available.</p> {/* Simplified message */}
           </div>
         ) : (
-          // Render the entire recommendations markdown content directly
+          // Revert to rendering the entire recommendations markdown content directly
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}

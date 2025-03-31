@@ -23,6 +23,8 @@ const KeyMetricHighlight = ({
   return (
     <motion.div variants={itemVariants} className={className}>
       <Card className="text-center h-full">
+        {" "}
+        {/* Removed temporary background */}
         <CardHeader className="pb-2">
           <CardTitle className="text-sm font-medium text-muted-foreground flex items-center justify-center gap-2">
             {Icon && <Icon className="h-4 w-4" />}

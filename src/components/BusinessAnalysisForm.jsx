@@ -117,7 +117,7 @@ const BusinessAnalysisForm = ({ onSubmit, isLoading }) => {
           businessName: "profici",
           website: "https://profici.co.uk", // Added https://
           industry: "digital marketing",
-          competitors: [{ value: "blaze media" }],
+          competitors: [{ value: "https://blazemedia.co.uk/" }],
           email: "dev@profici.co.uk",
         });
       }, 0); // Timeout 0 pushes execution to the end of the event loop
@@ -364,7 +364,10 @@ const BusinessAnalysisForm = ({ onSubmit, isLoading }) => {
                         <div className="flex items-center gap-2">
                           <FormControl asChild>
                             <Input
-                              placeholder={`Competitor ${index + 1} Name/URL`}
+                              type="website"
+                              placeholder={`Competitor ${
+                                index + 1
+                              } Website (e.g., example.com)`}
                               {...field}
                             />
                           </FormControl>
@@ -397,7 +400,8 @@ const BusinessAnalysisForm = ({ onSubmit, isLoading }) => {
                   </span>
                 </Button>
                 <FormDescription>
-                  Enter the names or websites of your main competitors.
+                  Enter the website domain (e.g., example.com) of your main
+                  competitors.
                 </FormDescription>
                 {form.formState.errors.competitors?.root && (
                   <p className="text-sm font-medium text-destructive">

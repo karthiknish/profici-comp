@@ -205,13 +205,19 @@ const BusinessAnalysisReport = ({ results, industry, submittedData }) => {
                     value={section.value}
                     className="mt-0"
                   >
-                    <motion.div
-                      key={section.value}
+                    {/* Removed motion.div wrapper to test text selection */}
+                    <div key={section.value}>
+                      {" "}
+                      {/* Added simple div wrapper with key */}
+                      {/*
                       variants={cardVariants}
                       initial="hidden"
+                    */}
+                      {/*
                       animate="visible"
                       transition={{ duration: 0.5 }}
                     >
+                    */}
                       {/* Use the component defined in reportSections */}
                       {section.isSeo ? (
                         <section.component
@@ -229,7 +235,8 @@ const BusinessAnalysisReport = ({ results, industry, submittedData }) => {
                       ) : (
                         <section.component data={results[section.dataKey]} />
                       )}
-                    </motion.div>
+                      {/* </motion.div> */}
+                    </div>
                   </TabsContent>
                 )
               );

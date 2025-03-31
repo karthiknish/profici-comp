@@ -9,51 +9,33 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-// Remove Table imports if MarkdownTableRenderer handles it
-// import {
-//   Table,
-//   TableBody,
-//   TableCell,
-//   TableHead,
-//   TableHeader,
-//   TableRow,
-// } from "@/components/ui/table";
-import { parseMarkdownTable, extractListItems } from "@/utils/parsing";
-import StatCard from "@/components/ui/StatCard"; // Import the new component
+import { parseMarkdownTable, extractListItems } from "@/utils/parsing"; // Restore parsing utils
+import StatCard from "@/components/ui/StatCard"; // Restore StatCard
 import {
   ListChecks,
   Scale,
   Building2,
   Briefcase,
   Activity,
-  TrendingUp as TrendingUpIcon, // Renamed for clarity
+  TrendingUp as TrendingUpIcon,
   TrendingDown,
   Users as UsersIcon,
   DollarSign as DollarSignIcon,
-} from "lucide-react";
-// Remove ReactMarkdown imports
-// import ReactMarkdown from "react-markdown";
-// import remarkGfm from "remark-gfm";
-// import rehypeRaw from "rehype-raw";
-import MarkdownRenderer from "@/components/ui/MarkdownRenderer"; // Import new component
-import MarkdownTableRenderer from "@/components/ui/MarkdownTableRenderer"; // Import new component
-
-// Remove RenderMarkdownTable definition
-/*
-const RenderMarkdownTable = ({ tableData }) => { ... };
-*/
+} from "lucide-react"; // Restore icons
+import MarkdownRenderer from "@/components/ui/MarkdownRenderer"; // Restore MarkdownRenderer
+import MarkdownTableRenderer from "@/components/ui/MarkdownTableRenderer"; // Restore MarkdownTableRenderer
 
 const MarketCapSection = ({ data }) => {
-  // Adjust parsing based on actual prompt structure
+  // Restore parsing logic
   const valuationData = parseMarkdownTable(data, "Valuation Metrics");
   const marketSizeData = parseMarkdownTable(data, "Industry Market Size");
-  const segmentationData = parseMarkdownTable(data, "Market Segmentation"); // Added parsing
-  const investmentData = extractListItems(data, "Investment Landscape Summary"); // Parse as list
-  const concentrationData = extractListItems(data, "Market Concentration"); // Parse as list
+  const segmentationData = parseMarkdownTable(data, "Market Segmentation");
+  const investmentData = extractListItems(data, "Investment Landscape Summary");
+  const concentrationData = extractListItems(data, "Market Concentration");
   const driversConstraintsData = extractListItems(
     data,
     "Growth Drivers and Constraints"
-  ); // Parse as list
+  );
   const keyTakeaways = extractListItems(data, "Key Takeaways");
 
   let peRatio,
@@ -63,7 +45,7 @@ const MarketCapSection = ({ data }) => {
   if (valuationData) {
     const findMetricValue = (metricName) =>
       valuationData.find((row) => row.Metric === metricName)?.[
-        "Average Value Est." // Match the prompt's column name
+        "Average Value Est."
       ];
     peRatio = findMetricValue("P/E Ratio");
     evEbitda = findMetricValue("EV/EBITDA");
@@ -80,7 +62,7 @@ const MarketCapSection = ({ data }) => {
     }),
   };
 
-  // Determine if we should show the raw markdown fallback
+  // Restore fallback logic based on parsing results
   const showFallback =
     !keyTakeaways &&
     !valuationData &&
@@ -105,6 +87,7 @@ const MarketCapSection = ({ data }) => {
             <MarkdownRenderer content={data} />
           </div>
         ) : (
+          // Restore original rendering logic using parsed data
           <motion.div
             initial="hidden"
             animate="visible"
@@ -117,10 +100,8 @@ const MarketCapSection = ({ data }) => {
                   <ListChecks className="mr-2 h-5 w-5 text-primary" />
                   Key Takeaways
                 </h3>
-                {/* Use MarkdownRenderer for list content */}
                 <div className="p-4 border rounded-lg bg-muted/50 mt-2">
-                  <MarkdownRenderer content={keyTakeaways.join("\n")} />{" "}
-                  {/* Join list items for rendering */}
+                  <MarkdownRenderer content={keyTakeaways.join("\n")} />
                 </div>
               </motion.div>
             )}
@@ -129,12 +110,11 @@ const MarketCapSection = ({ data }) => {
               <motion.div
                 variants={itemVariants}
                 custom={1}
-                className="mt-6 pt-6 border-t" // Added spacing
+                className="mt-6 pt-6 border-t"
               >
                 <h3 className="text-xl font-semibold mb-4 pb-2 border-b flex items-center">
                   Industry Market Size (UK Est.)
                 </h3>
-                {/* Use MarkdownTableRenderer */}
                 <MarkdownTableRenderer tableData={marketSizeData} />
               </motion.div>
             )}
@@ -143,12 +123,11 @@ const MarketCapSection = ({ data }) => {
               <motion.div
                 variants={itemVariants}
                 custom={2}
-                className="mt-6 pt-6 border-t" // Added spacing
+                className="mt-6 pt-6 border-t"
               >
                 <h3 className="text-xl font-semibold mb-4 pb-2 border-b flex items-center">
                   Market Segmentation (UK Est.)
                 </h3>
-                {/* Use MarkdownTableRenderer */}
                 <MarkdownTableRenderer tableData={segmentationData} />
               </motion.div>
             )}
@@ -157,7 +136,7 @@ const MarketCapSection = ({ data }) => {
               <motion.div
                 variants={itemVariants}
                 custom={3}
-                className="mt-6 pt-6 border-t" // Added spacing
+                className="mt-6 pt-6 border-t"
               >
                 <h3 className="text-xl font-semibold mb-4 pb-2 border-b flex items-center">
                   Valuation Metrics (UK Industry Averages Est.)
@@ -195,7 +174,6 @@ const MarketCapSection = ({ data }) => {
               </motion.div>
             )}
 
-            {/* Render list-based sections */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6 pt-6 border-t">
               {investmentData && (
                 <motion.div variants={itemVariants} custom={4}>
@@ -204,7 +182,6 @@ const MarketCapSection = ({ data }) => {
                     Investment Landscape (UK Est.)
                   </h3>
                   <div className="p-4 border rounded-lg bg-muted/50">
-                    {/* Use MarkdownRenderer for list content */}
                     <MarkdownRenderer content={investmentData.join("\n")} />
                   </div>
                 </motion.div>
@@ -217,7 +194,6 @@ const MarketCapSection = ({ data }) => {
                     Market Concentration (UK Est.)
                   </h3>
                   <div className="p-4 border rounded-lg bg-muted/50">
-                    {/* Use MarkdownRenderer for list content */}
                     <MarkdownRenderer content={concentrationData.join("\n")} />
                   </div>
                 </motion.div>
@@ -235,7 +211,6 @@ const MarketCapSection = ({ data }) => {
                   <TrendingDown className="mr-1 h-5 w-5 text-red-500" /> Growth
                   Drivers & Constraints (UK Est.)
                 </h3>
-                {/* Use MarkdownRenderer for list content */}
                 <div className="p-4 border rounded-lg bg-muted/50">
                   <MarkdownRenderer
                     content={driversConstraintsData.join("\n")}

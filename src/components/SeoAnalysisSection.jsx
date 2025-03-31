@@ -1,13 +1,6 @@
 "use client";
 
 import React from "react";
-// Remove ReactMarkdown imports
-// import ReactMarkdown from "react-markdown";
-// import rehypeRaw from "rehype-raw";
-// import remarkGfm from "remark-gfm";
-// Remove SyntaxHighlighter imports if handled by MarkdownRenderer
-// import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
-// import { vscDarkPlus } from "react-syntax-highlighter/dist/esm/styles/prism";
 import { motion } from "framer-motion";
 import { Progress } from "@/components/ui/progress";
 import { parseMarkdownTable, parsePercentage } from "@/utils/parsing";
@@ -58,15 +51,10 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import MarkdownRenderer from "@/components/ui/MarkdownRenderer"; // Import new component
+import MarkdownRenderer from "@/components/ui/MarkdownRenderer"; // Restore import
 
-// Remove mock data constants
-// const keywordRankingData = [ ... ];
-// const organicTrafficData = [ ... ];
-// const backlinksData = [ ... ];
-const COLORS = ["#0088FE", "#00C49F", "#FFBB28", "#FF8042", "#FF80F2"]; // Keep COLORS for charts using real data
+const COLORS = ["#0088FE", "#00C49F", "#FFBB28", "#FF8042", "#FF80F2"];
 
-// Component to display a metric with a progress bar (Consider moving to ui if not already done)
 const PercentageMetric = ({ label, value, icon: Icon }) => {
   const percentage = parsePercentage(value);
   if (percentage === null) {
@@ -93,7 +81,7 @@ const PercentageMetric = ({ label, value, icon: Icon }) => {
 };
 
 const SeoAnalysisSection = ({ seoAnalysis }) => {
-  // --- Data Parsing ---
+  // Restore parsing logic
   const keywordDistData = parseMarkdownTable(seoAnalysis, "Position Range");
   const backlinkSummaryData = parseMarkdownTable(
     seoAnalysis,
@@ -118,7 +106,7 @@ const SeoAnalysisSection = ({ seoAnalysis }) => {
 
   const healthScoreMatch = seoAnalysis?.match(
     /SEO health score(?: \(UK\))?: (\d+)/i
-  ); // Make UK optional and case-insensitive
+  );
   const healthScore = healthScoreMatch
     ? parsePercentage(healthScoreMatch[1])
     : null;
@@ -127,59 +115,38 @@ const SeoAnalysisSection = ({ seoAnalysis }) => {
   const schemaCoverage =
     techSeoSummaryData?.[0]?.["Schema Markup Coverage (Est.)"];
 
-  // --- Chart Data Extraction ---
   const extractKeywordData = (markdownContent) => {
-    const parsed = parseMarkdownTable(markdownContent, "Keyword Rankings"); // Use correct table title
+    const parsed = parseMarkdownTable(markdownContent, "Keyword Rankings");
     if (parsed) {
       return parsed.map((row) => ({
-        // Adjust keys based on actual table headers from prompt
         keyword: row["Keyword (UK Focus)"] || row.Keyword,
         ranking: parseInt(row["Ranking (UK)"] || row.Ranking) || 0,
         volume: parseInt(row["Search Volume (UK)"] || row.Volume) || 0,
         difficulty: parseInt(row["Difficulty (UK)"] || row.Difficulty) || 0,
       }));
     }
-    // Return empty array if parsing fails
-    return [];
-  };
-  const extractBacklinkData = (markdownContent) => {
-    // Try parsing from markdown if needed
-    // const parsed = parseMarkdownTable(markdownContent, "Backlink Distribution");
-    // if (parsed) { ... }
-    // Return empty array
     return [];
   };
   const extractPageSpeedData = (markdownContent) => {
     const parsed = parseMarkdownTable(
       markdownContent,
       "Page Speed & Mobile Summary"
-    ); // Use correct table title
+    );
     if (parsed && parsed.length > 0) {
       const findValue = (metric) => parsed.find((row) => row.Metric === metric);
-      const lcpRow = findValue("LCP");
-      const inpRow = findValue("FID/INP"); // Or FID depending on what Gemini returns
-      const clsRow = findValue("CLS");
       const scoreRow = findValue("PageSpeed Score");
       return {
         desktop: scoreRow ? parsePercentage(scoreRow["Desktop Value"]) : null,
         mobile: scoreRow ? parsePercentage(scoreRow["Mobile Value"]) : null,
-        // Could add LCP, INP, CLS values here too if needed for display
       };
     }
     return null;
-  };
-  const extractTrafficData = (markdownContent) => {
-    // Try parsing from markdown if needed
-    // const parsed = parseMarkdownTable(markdownContent, "Organic Traffic Trend");
-    // if (parsed) { ... }
-    // Return empty array
-    return [];
   };
   const extractKeywordDistribution = (markdownContent) => {
     const parsed = parseMarkdownTable(
       markdownContent,
       "Keyword Distribution Summary"
-    ); // Use correct table title
+    );
     if (parsed) {
       return parsed.map((row) => ({
         name: row["Position Range"],
@@ -190,12 +157,9 @@ const SeoAnalysisSection = ({ seoAnalysis }) => {
   };
 
   const keywordData = extractKeywordData(seoAnalysis);
-  const backlinkData = extractBacklinkData(seoAnalysis); // Will be empty now
   const pageSpeedData = extractPageSpeedData(seoAnalysis);
-  const trafficData = extractTrafficData(seoAnalysis); // Will be empty now
   const keywordDistribution = extractKeywordDistribution(seoAnalysis);
 
-  // Animation variants
   const itemVariants = {
     hidden: { opacity: 0, y: 10 },
     visible: (i) => ({
@@ -218,17 +182,14 @@ const SeoAnalysisSection = ({ seoAnalysis }) => {
             <TabsTrigger value="visualization">Charts</TabsTrigger>
           </TabsList>
 
-          {/* Detailed Report Tab */}
           <TabsContent value="report" className="space-y-4">
-            {/* Use MarkdownRenderer for the detailed report */}
-            <div className="markdown-content">
+            <div className="prose dark:prose-invert max-w-none text-sm markdown-content">
               <MarkdownRenderer
                 content={seoAnalysis || "No detailed analysis data available."}
               />
             </div>
           </TabsContent>
 
-          {/* Visual Summary Tab */}
           <TabsContent value="visual-summary">
             <motion.div
               initial="hidden"
@@ -236,34 +197,40 @@ const SeoAnalysisSection = ({ seoAnalysis }) => {
               variants={{ visible: { transition: { staggerChildren: 0.05 } } }}
               className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4"
             >
-              <KeyMetricHighlight
-                label="SEO Health Score"
-                value={healthScore}
-                icon={Gauge}
-                className="sm:col-span-1 lg:col-span-1"
-              />
+              {healthScore !== null && (
+                <KeyMetricHighlight
+                  label={
+                    healthScoreMatch &&
+                    healthScoreMatch[0].toLowerCase().includes("(uk)")
+                      ? "SEO Health Score (UK)"
+                      : "SEO Health Score"
+                  }
+                  value={healthScore}
+                  icon={Gauge}
+                  className="sm:col-span-1 lg:col-span-1"
+                />
+              )}
               <KeyMetricHighlight
                 label="Toxic Backlinks"
-                value={toxicBacklinks}
+                value={parsePercentage(toxicBacklinks)}
                 unit="%"
                 icon={ShieldAlert}
                 className="sm:col-span-1 lg:col-span-1"
               />
               <KeyMetricHighlight
                 label="Indexation Rate"
-                value={indexationRate}
+                value={parsePercentage(indexationRate)}
                 unit="%"
                 icon={DatabaseZap}
                 className="sm:col-span-1 lg:col-span-1"
               />
               <KeyMetricHighlight
                 label="Schema Coverage"
-                value={schemaCoverage}
+                value={parsePercentage(schemaCoverage)}
                 unit="%"
                 icon={Code}
                 className="sm:col-span-1 lg:col-span-1"
               />
-              {/* Check if pageSpeedData exists before accessing its properties */}
               {pageSpeedData && pageSpeedData.mobile !== null && (
                 <KeyMetricHighlight
                   label="Mobile PageSpeed"
@@ -273,7 +240,6 @@ const SeoAnalysisSection = ({ seoAnalysis }) => {
                   className="sm:col-span-1 lg:col-span-1"
                 />
               )}
-              {/* Check if pageSpeedData exists before accessing its properties */}
               {pageSpeedData && pageSpeedData.desktop !== null && (
                 <KeyMetricHighlight
                   label="Desktop PageSpeed"
@@ -283,13 +249,11 @@ const SeoAnalysisSection = ({ seoAnalysis }) => {
                   className="sm:col-span-1 lg:col-span-1"
                 />
               )}
-
               {keywordDistribution && keywordDistribution.length > 0 && (
                 <motion.div
                   variants={itemVariants}
                   className="space-y-2 rounded-lg border bg-card text-card-foreground shadow-sm p-4 col-span-1 sm:col-span-2 lg:col-span-3"
                 >
-                  {/* Enhanced Heading Style */}
                   <h3 className="text-xl font-semibold mb-4 pb-2 border-b flex items-center">
                     <PieChartIcon className="mr-2 h-4 w-4 text-primary" />
                     Keyword Distribution
@@ -310,7 +274,6 @@ const SeoAnalysisSection = ({ seoAnalysis }) => {
                   variants={itemVariants}
                   className="space-y-2 rounded-lg border bg-card text-card-foreground shadow-sm p-4"
                 >
-                  {/* Enhanced Heading Style */}
                   <h3 className="text-xl font-semibold mb-4 pb-2 border-b flex items-center">
                     <FileText className="mr-2 h-4 w-4 text-primary" />
                     Content Summary
@@ -326,7 +289,6 @@ const SeoAnalysisSection = ({ seoAnalysis }) => {
                   variants={itemVariants}
                   className="space-y-2 rounded-lg border bg-card text-card-foreground shadow-sm p-4"
                 >
-                  {/* Enhanced Heading Style */}
                   <h3 className="text-xl font-semibold mb-4 pb-2 border-b flex items-center">
                     <MapPin className="mr-2 h-4 w-4 text-primary" />
                     Local SEO
@@ -342,7 +304,6 @@ const SeoAnalysisSection = ({ seoAnalysis }) => {
                   variants={itemVariants}
                   className="space-y-2 rounded-lg border bg-card text-card-foreground shadow-sm p-4"
                 >
-                  {/* Enhanced Heading Style */}
                   <h3 className="text-xl font-semibold mb-4 pb-2 border-b flex items-center">
                     <ShoppingCart className="mr-2 h-4 w-4 text-primary" />
                     E-commerce SEO
@@ -371,7 +332,6 @@ const SeoAnalysisSection = ({ seoAnalysis }) => {
             </motion.div>
           </TabsContent>
 
-          {/* Data Visualization Tab (Charts) */}
           <TabsContent value="visualization">
             <div className="space-y-6">
               {keywordData.length > 0 ? (
@@ -382,7 +342,6 @@ const SeoAnalysisSection = ({ seoAnalysis }) => {
                     animate="visible"
                     custom={0}
                   >
-                    {/* Enhanced Heading Style */}
                     <h3 className="text-xl font-semibold mb-4 pb-2 border-b flex items-center">
                       Keyword Rankings
                     </h3>
@@ -410,7 +369,6 @@ const SeoAnalysisSection = ({ seoAnalysis }) => {
                     animate="visible"
                     custom={1}
                   >
-                    {/* Enhanced Heading Style */}
                     <h3 className="text-xl font-semibold mb-4 pb-2 border-b flex items-center">
                       Search Volume vs Difficulty
                     </h3>
@@ -469,7 +427,6 @@ const SeoAnalysisSection = ({ seoAnalysis }) => {
                   animate="visible"
                   custom={2}
                 >
-                  {/* Enhanced Heading Style */}
                   <h3 className="text-xl font-semibold mb-4 pb-2 border-b flex items-center">
                     Keyword Distribution
                   </h3>
@@ -501,10 +458,6 @@ const SeoAnalysisSection = ({ seoAnalysis }) => {
                   </div>
                 </motion.div>
               )}
-              {/* Remove Backlink Distribution Mock Chart */}
-              {/* ... */}
-              {/* Remove Organic Traffic Mock Chart */}
-              {/* ... */}
               {pageSpeedData && (
                 <motion.div
                   variants={itemVariants}
@@ -512,7 +465,6 @@ const SeoAnalysisSection = ({ seoAnalysis }) => {
                   animate="visible"
                   custom={5}
                 >
-                  {/* Enhanced Heading Style */}
                   <h3 className="text-xl font-semibold mb-4 pb-2 border-b flex items-center">
                     Page Speed Scores
                   </h3>

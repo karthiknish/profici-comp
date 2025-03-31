@@ -4,6 +4,7 @@ import remarkGfm from "remark-gfm";
 import rehypeRaw from "rehype-raw";
 import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
 import { vscDarkPlus } from "react-syntax-highlighter/dist/esm/styles/prism";
+import { cn } from "@/lib/utils"; // Ensure cn is imported
 
 // Centralized Markdown Component Styles
 const markdownComponents = {
@@ -16,7 +17,9 @@ const markdownComponents = {
   h4: ({ node, ...props }) => (
     <h4 className="text-base font-semibold mt-3 mb-2" {...props} />
   ),
+  // Reverted paragraph renderer to default
   p: ({ node, ...props }) => <p className="mb-2 text-sm" {...props} />,
+  // Reverted ul renderer to default (with bullets)
   ul: ({ node, ...props }) => (
     <ul className="list-disc pl-5 space-y-1 text-sm mb-3" {...props} />
   ),
@@ -27,12 +30,15 @@ const markdownComponents = {
     // Use default text color (text-foreground) for better contrast
     <li className="" {...props} />
   ),
+  // Reverted blockquote to default styling
   blockquote: ({ node, ...props }) => (
     <blockquote
       className="border-l-4 border-border pl-4 py-1 my-3 text-muted-foreground italic"
       {...props}
     />
   ),
+  // Removed custom em renderer, use default italics
+  // em: ({ node, children, ...props }) => { ... },
   hr: ({ node, ...props }) => <hr className="my-6 border-border" {...props} />,
   // Add table renderers using Shadcn UI components
   table: ({ node, ...props }) => (
@@ -63,7 +69,7 @@ const markdownComponents = {
     const match = /language-(\w+)/.exec(className || "");
     return !inline && match ? (
       <SyntaxHighlighter
-        style={vscDarkPlus}
+        /* Removed style={vscDarkPlus} to avoid forced dark background */
         language={match[1]}
         PreTag="div"
         {...props}

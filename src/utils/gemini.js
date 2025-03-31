@@ -11,7 +11,9 @@ export const generateSeoAnalysis = async (formData) => {
     throw new Error("Gemini API not initialized. Call initGemini first.");
   }
 
-  const model = geminiApi.getGenerativeModel({ model: "gemini-2.0-flash" });
+  const model = geminiApi.getGenerativeModel({
+    model: "gemini-2.5-pro-exp-03-25",
+  });
 
   // Create prompts for each section of the report
   const seoPrompt = `Create a comprehensive SEO analysis for the website ${formData.website}, a business in the ${formData.industry} industry.

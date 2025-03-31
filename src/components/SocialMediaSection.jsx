@@ -9,16 +9,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-// Remove Table imports if MarkdownTableRenderer handles it
-// import {
-//   Table,
-//   TableBody,
-//   TableCell,
-//   TableHead,
-//   TableHeader,
-//   TableRow,
-// } from "@/components/ui/table";
-import { parseMarkdownTable, extractListItems } from "@/utils/parsing";
+import { parseMarkdownTable, extractListItems } from "@/utils/parsing"; // Restore parsing utils
 import {
   ThumbsUp,
   ThumbsDown,
@@ -30,25 +21,17 @@ import {
   Smile, // Added for positive sentiment
   Frown, // Added for negative sentiment
   Meh, // Added for neutral sentiment
-} from "lucide-react";
-// Remove ReactMarkdown imports
-// import ReactMarkdown from "react-markdown";
-// import remarkGfm from "remark-gfm";
-// import rehypeRaw from "rehype-raw";
-import MarkdownRenderer from "@/components/ui/MarkdownRenderer"; // Import new component
-import MarkdownTableRenderer from "@/components/ui/MarkdownTableRenderer"; // Import new component
-// PercentageMetric is not used here anymore
-// import { PercentageMetric } from "./BusinessAnalysisReport";
+} from "lucide-react"; // Restore icons
+import MarkdownRenderer from "@/components/ui/MarkdownRenderer"; // Restore MarkdownRenderer
+import MarkdownTableRenderer from "@/components/ui/MarkdownTableRenderer"; // Restore MarkdownTableRenderer
 
 // Helper to extract content under a specific H3 (###) subheading
 const extractContentUnderSubheading = (markdown, subheading) => {
   if (!markdown || !subheading) return null;
-  // Regex to find content under a specific H3 heading until the next H3 or end of string
-  // Make subheading matching more flexible (case-insensitive, optional chars)
   const subheadingPattern = subheading.replace(
     /[-\/\\^$*+?.()|[\]{}]/g,
     "\\$&"
-  ); // Escape regex chars
+  );
   const regex = new RegExp(
     `###\\s*${subheadingPattern}[\\s\\S]*?\\n([\\s\\S]*?)(?=\\n###|$)`,
     "i"
@@ -56,11 +39,6 @@ const extractContentUnderSubheading = (markdown, subheading) => {
   const match = markdown.match(regex);
   return match ? match[1].trim() : null;
 };
-
-// Remove RenderMarkdownTable definition as it's now imported
-/*
-const RenderMarkdownTable = ({ tableData }) => { ... };
-*/
 
 // Helper to render list items with appropriate icons based on content
 const SentimentListItem = ({ item, index }) => {
@@ -82,7 +60,6 @@ const SentimentListItem = ({ item, index }) => {
     color = "text-blue-600 dark:text-blue-400";
   }
 
-  // Remove the prefix for display if needed (e.g., "- Competitor A: ")
   const displayItem = item.replace(/^-\s*.*?:\s*/, "");
 
   return (
@@ -94,11 +71,10 @@ const SentimentListItem = ({ item, index }) => {
 };
 
 const SocialMediaSection = ({ data }) => {
-  // --- Parsing ---
+  // Restore parsing logic
   const keyTakeaways = extractListItems(data, "Key Takeaways");
   const platformData = parseMarkdownTable(data, "Platform Presence");
 
-  // Extract structured sentiment and recommendations using the new helper
   const sentimentAnalysisContent = extractContentUnderSubheading(
     data,
     "Audience Sentiment Analysis"
@@ -128,7 +104,7 @@ const SocialMediaSection = ({ data }) => {
     : null;
   const keyActions = recommendationsContent
     ? extractListItems(recommendationsContent, "Key Actions")
-    : null; // Might need more specific parsing based on Gemini output
+    : null;
 
   const itemVariants = {
     hidden: { opacity: 0, y: 10 },
@@ -139,12 +115,12 @@ const SocialMediaSection = ({ data }) => {
     }),
   };
 
-  // Determine if significant parsing failed
+  // Restore fallback logic
   const showFallback =
     !keyTakeaways &&
     !platformData &&
-    !sentimentAnalysisContent && // Check parent block
-    !recommendationsContent; // Check parent block
+    !sentimentAnalysisContent &&
+    !recommendationsContent;
 
   return (
     <Card className="w-full">
@@ -159,31 +135,28 @@ const SocialMediaSection = ({ data }) => {
       <CardContent>
         {showFallback ? (
           <div className="prose dark:prose-invert max-w-none text-sm">
-            {/* Use MarkdownRenderer for fallback */}
             <MarkdownRenderer content={data} />
           </div>
         ) : (
+          // Restore original rendering logic
           <motion.div
             initial="hidden"
             animate="visible"
             variants={{ visible: { transition: { staggerChildren: 0.1 } } }}
             className="space-y-6"
           >
-            {/* Key Takeaways */}
             {keyTakeaways && (
               <motion.div variants={itemVariants} custom={0}>
                 <h3 className="text-xl font-semibold mb-4 pb-2 border-b flex items-center">
                   <ListChecks className="mr-2 h-5 w-5 text-primary" />
                   Key Takeaways
                 </h3>
-                {/* Use MarkdownRenderer for list content */}
                 <div className="p-4 border rounded-lg bg-muted/50 mt-2">
                   <MarkdownRenderer content={keyTakeaways.join("\n")} />
                 </div>
               </motion.div>
             )}
 
-            {/* Platform Presence Table */}
             {platformData && (
               <motion.div
                 variants={itemVariants}
@@ -193,14 +166,11 @@ const SocialMediaSection = ({ data }) => {
                 <h3 className="text-xl font-semibold mb-4 pb-2 border-b flex items-center">
                   Platform Presence & Engagement (Est.)
                 </h3>
-                {/* Use MarkdownTableRenderer */}
                 <MarkdownTableRenderer tableData={platformData} />
               </motion.div>
             )}
 
-            {/* New Layout for Sentiment and Recommendations */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6 pt-6 border-t">
-              {/* Audience Sentiment Section */}
               {sentimentAnalysisContent && (
                 <motion.div variants={itemVariants} custom={2}>
                   <h3 className="text-xl font-semibold mb-4 pb-2 border-b flex items-center">
@@ -213,7 +183,6 @@ const SocialMediaSection = ({ data }) => {
                         <h4 className="font-medium text-sm mb-1">
                           Overall Brand Sentiment:
                         </h4>
-                        {/* Render using SentimentListItem helper */}
                         <ul className="space-y-1 text-sm">
                           {overallSentiment.map((item, index) => (
                             <SentimentListItem
@@ -230,7 +199,6 @@ const SocialMediaSection = ({ data }) => {
                         <h4 className="font-medium text-sm mb-1">
                           Key Discussion Themes:
                         </h4>
-                        {/* Render using MarkdownRenderer */}
                         <MarkdownRenderer
                           content={discussionThemes.join("\n")}
                         />
@@ -241,7 +209,6 @@ const SocialMediaSection = ({ data }) => {
                         <h4 className="font-medium text-sm mb-1">
                           Competitor Sentiment Snippets:
                         </h4>
-                        {/* Render using SentimentListItem helper */}
                         <ul className="space-y-1 text-sm">
                           {competitorSentiment.map((item, index) => (
                             <SentimentListItem
@@ -257,7 +224,6 @@ const SocialMediaSection = ({ data }) => {
                 </motion.div>
               )}
 
-              {/* Platform Recommendations Section */}
               {recommendationsContent && (
                 <motion.div variants={itemVariants} custom={3}>
                   <h3 className="text-xl font-semibold mb-4 pb-2 border-b flex items-center">
@@ -270,14 +236,12 @@ const SocialMediaSection = ({ data }) => {
                         <h4 className="font-medium text-sm mb-1">
                           Top Recommended Platforms:
                         </h4>
-                        {/* Render using MarkdownRenderer */}
                         <MarkdownRenderer content={topPlatforms.join("\n")} />
                       </div>
                     )}
                     {rationale && (
                       <div>
                         <h4 className="font-medium text-sm mb-1">Rationale:</h4>
-                        {/* Render using MarkdownRenderer */}
                         <MarkdownRenderer content={rationale.join("\n")} />
                       </div>
                     )}
@@ -286,7 +250,6 @@ const SocialMediaSection = ({ data }) => {
                         <h4 className="font-medium text-sm mb-1">
                           Key Actions (Next 3 Months):
                         </h4>
-                        {/* Render using MarkdownRenderer */}
                         <MarkdownRenderer content={keyActions.join("\n")} />
                       </div>
                     )}
