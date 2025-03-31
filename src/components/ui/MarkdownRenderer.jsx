@@ -70,12 +70,11 @@ const markdownComponents = {
         {String(children).replace(/\n$/, "")}
       </SyntaxHighlighter>
     ) : (
+      // For inline code, ensure children are treated as text content
       <code
         className={`relative rounded bg-muted px-[0.3rem] py-[0.2rem] font-mono text-sm font-semibold ${className}`}
         {...props}
-      >
-        {children}
-      </code>
+      >{` ${String(children)} `}</code> // Wrap in template literal just in case
     );
   },
 };

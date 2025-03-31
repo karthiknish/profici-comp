@@ -177,7 +177,7 @@ export default function HomePage() {
       name: "Maria Garcia",
       title: "E-commerce Manager",
       quote:
-        "The SEO analysis pinpointed technical issues we'd missed for months. Fixing them led to a noticeable traffic increase.",
+        "The SEO analysis pinpointed technical issues we&apos;d missed for months. Fixing them led to a noticeable traffic increase.",
       initials: "MG",
     },
     {
