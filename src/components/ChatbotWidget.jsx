@@ -10,10 +10,11 @@ import {
   CardTitle,
   CardFooter,
 } from "@/components/ui/card";
-import { MessageSquare, X, Send, Bot, Loader2 } from "lucide-react"; // Import Loader2
+import { MessageSquare, X, Send, Bot, Loader2 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { toast } from "sonner"; // Import toast for error handling
+import { toast } from "sonner";
+import MarkdownRenderer from "@/components/ui/MarkdownRenderer"; // Import MarkdownRenderer
 
 const ChatbotWidget = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -165,10 +166,19 @@ const ChatbotWidget = () => {
                           className={`max-w-[75%] rounded-lg px-3 py-2 text-sm ${
                             msg.sender === "user"
                               ? "bg-primary text-primary-foreground"
-                              : "bg-muted"
+                              : "bg-muted" // Keep bg-muted for bot bubble background
                           }`}
                         >
-                          {msg.text}
+                          {/* Render bot messages using MarkdownRenderer */}
+                          {msg.sender === "bot" ? (
+                            <div className="prose prose-sm dark:prose-invert max-w-none">
+                              {" "}
+                              {/* Add prose styles */}
+                              <MarkdownRenderer content={msg.text} />
+                            </div>
+                          ) : (
+                            msg.text // Render user messages as plain text
+                          )}
                         </div>
                       </div>
                     ))}
