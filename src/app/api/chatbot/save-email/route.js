@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import clientPromise from "@/lib/mongodb"; // Import the MongoDB client promise
+import { connectToDatabase } from "@/lib/mongodb"; // Import the connect function
 
 export async function POST(request) {
   try {
@@ -17,8 +17,8 @@ export async function POST(request) {
       );
     }
 
-    const client = await clientPromise;
-    const db = client.db(); // Use the default database configured in MONGODB_URI
+    // Get the database object directly from the connect function
+    const { db } = await connectToDatabase();
 
     // Choose a collection name (e.g., 'chatbot_emails')
     const collection = db.collection("chatbot_emails");
