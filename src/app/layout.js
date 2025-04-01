@@ -1,6 +1,8 @@
 import { Geist, Geist_Mono } from "next/font/google";
+import AuthProvider from "@/components/AuthProvider"; // Import the provider
 import "./globals.css";
 import ChatbotWidget from "@/components/ChatbotWidget"; // Import the chatbot
+// Note: Toaster should be imported where it's used, likely within AuthProvider or a client component
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -139,14 +141,22 @@ export const viewport = {
 };
 
 export default function RootLayout({ children }) {
+  // Note: We don't have access to the session directly here in server component layout
+  // The AuthProvider component will handle the client-side session context
   return (
     <html lang="en">
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        {children}
-        {/* Render the custom Chatbot Widget */}
-        <ChatbotWidget />
+        <AuthProvider>
+          {" "}
+          {/* Wrap children with AuthProvider */}
+          {children}
+          {/* Render the custom Chatbot Widget */}
+          <ChatbotWidget />
+          {/* Toaster should ideally be inside AuthProvider or another client component */}
+          {/* <Toaster />  <- Moved Toaster potentially inside AuthProvider or page if needed */}
+        </AuthProvider>
       </body>
     </html>
   );
