@@ -296,6 +296,39 @@ export async function POST(request) {
         businessName: businessName,
         // Include fetched Apollo data in the response
         apolloData: apolloData,
+
+        // --- Add Structured SEO Data for Frontend ---
+        seoVisualData: {
+          healthScore: insitesReport?.overall_score || null, // Use overall score as health score basis
+          toxicBacklinks: insitesReport?.backlinks?.has_spammy_backlinks
+            ? "High Est."
+            : "Low Est.", // Example mapping
+          indexationRate: insitesReport?.spider?.indexation_rate || null, // Assuming this exists
+          schemaCoverage: insitesReport?.spider?.schema_coverage || null, // Assuming this exists
+          mobileFriendly: insitesReport?.mobile?.is_mobile ? "Yes" : "No",
+          pageSpeedDesktop: insitesReport?.pagespeed?.desktop?.score || null, // Example path
+          pageSpeedMobile: insitesReport?.pagespeed?.mobile?.score || null, // Example path
+          // Add other metrics needed for visual summary based on insites/apollo structure
+        },
+        seoChartData: {
+          keywordRankings:
+            insitesReport?.organic_search?.top_keywords_ranked_for_detail?.map(
+              (k) => ({
+                keyword: k.keyword,
+                ranking: k.position,
+                volume: k.volume,
+                // difficulty: k.difficulty // Add if available in insites data
+              })
+            ) || [],
+          keywordDistribution:
+            insitesReport?.organic_search?.keyword_distribution?.map((d) => ({
+              // Assuming structure
+              name: d.range, // e.g., "1-3"
+              value: d.percentage,
+            })) || [],
+          // Add other data needed for charts if available (e.g., traffic trend)
+        },
+        // --- End Structured SEO Data ---
       };
 
       const hasErrors = Object.values(analysisResults).some(

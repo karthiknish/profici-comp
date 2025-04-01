@@ -8,7 +8,8 @@ import BusinessAnalysisForm from "@/components/BusinessAnalysisForm";
 import BusinessAnalysisReport from "@/components/BusinessAnalysisReport";
 import AnalysisHeader from "@/components/AnalysisHeader"; // Import the new header component
 import { Toaster, toast } from "sonner";
-import { Loader2 } from "lucide-react";
+import { Loader2, ArrowLeft } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 // Helper function for polling delay
 const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
@@ -183,7 +184,7 @@ export default function AnalysisPage() {
     setIsLoading(true);
     setError(null);
     setAnalysisResults(null);
-    setSubmittedFormData(null);
+    setSubmittedFormData(null); // Clear previous submitted data
     setInsitesReportId(null);
 
     try {
@@ -257,124 +258,145 @@ export default function AnalysisPage() {
   // Render redirecting message or the actual content
   if (!hasAccess) {
     return (
-      <div className="flex justify-center items-center min-h-screen bg-gray-50">
+      <div className="flex justify-center items-center min-h-screen bg-gray-100">
         <p className="text-muted-foreground">Redirecting...</p>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-10">
-      <div className="container mx-auto px-4">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 py-8 md:py-12">
+      {" "}
+      {/* Restored background */}
+      <div className="container mx-auto px-4 max-w-6xl">
+        {" "}
+        {/* Kept wider container */}
         <motion.header
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
-          className="mb-10 text-center relative"
+          className="mb-8 pb-6 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center"
         >
-          <div className="absolute top-0 right-0 p-4">
-            <Link
-              href="/"
-              className="text-blue-600 hover:text-blue-800 text-sm font-medium"
-            >
-              Back to Home
+          <div>
+            <h1 className="text-2xl md:text-3xl font-bold text-gray-900 dark:text-white mb-1">
+              Competitive Analysis
+            </h1>
+            <p className="text-gray-600 dark:text-gray-400">
+              Powered by Profici.
+            </p>
+          </div>
+          <Button variant="outline" size="sm" asChild>
+            <Link href="/">
+              <ArrowLeft className="mr-2 h-4 w-4" /> Back to Home
             </Link>
-          </div>
-          <h1 className="text-3xl font-bold text-blue-800 mb-2">
-            Competitive Analysis Tool
-          </h1>
-          <p className="text-gray-600">
-            Get comprehensive insights for your business strategy
-          </p>
+          </Button>
         </motion.header>
+        {/* Main Content Area - Restore card styling */}
+        <div className="bg-background dark:bg-gray-800 shadow-lg rounded-lg p-6 md:p-8">
+          <AnimatePresence mode="wait">
+            {/* Show Form if no results/loading/error */}
+            {!analysisResults && !isLoading && !error && (
+              <motion.div
+                key="form"
+                variants={containerVariants}
+                initial="hidden"
+                animate="visible"
+                exit="exit"
+                // Removed max-w-3xl mx-auto from here
+              >
+                <BusinessAnalysisForm
+                  onSubmit={handleSubmit}
+                  isLoading={isLoading}
+                />
+              </motion.div>
+            )}
 
-        <AnimatePresence mode="wait">
-          {!analysisResults && !isLoading && !insitesReportId && !error && (
-            <motion.div
-              key="form"
-              variants={containerVariants}
-              initial="hidden"
-              animate="visible"
-              exit="exit"
-            >
-              <BusinessAnalysisForm
-                onSubmit={handleSubmit}
-                isLoading={isLoading}
-              />
-            </motion.div>
-          )}
-        </AnimatePresence>
+            {/* Show Loading State */}
+            {isLoading && (
+              <motion.div
+                key="loading"
+                variants={containerVariants}
+                initial="hidden"
+                animate="visible"
+                exit="exit"
+                className="flex flex-col items-center justify-center py-16 text-center"
+              >
+                <Loader2 className="h-12 w-12 animate-spin text-primary mb-4" />
+                <p className="text-lg font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  {insitesReportId && !analysisResults
+                    ? `Processing report... This may take a few minutes.`
+                    : "Generating final analysis..."}
+                </p>
+                <p className="text-sm text-muted-foreground">
+                  Please wait, fetching and analyzing data.
+                </p>
+              </motion.div>
+            )}
 
-        {error && (
-          <div className="max-w-2xl mx-auto p-4 bg-red-100 text-red-700 rounded-lg my-6">
-            <p className="font-medium">Error: {error}</p>
-            <button
-              onClick={() => {
-                setError(null);
-                setIsLoading(false);
-                setInsitesReportId(null);
-                setSubmittedFormData(null);
-              }}
-              className="mt-2 text-sm underline text-red-600"
-            >
-              Try again
-            </button>
-          </div>
-        )}
-
-        {isLoading && (
-          <div className="max-w-2xl mx-auto p-6 bg-white rounded-lg shadow-md text-center my-6">
-            <div className="flex flex-col items-center space-y-3">
-              <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
-              <p className="text-gray-600 font-medium">
-                {insitesReportId && !analysisResults
-                  ? `Processing report... This may take a few minutes.`
-                  : "Generating final analysis..."}
-              </p>
-              <p className="text-sm text-gray-500">
-                Please wait, fetching and analyzing data.
-              </p>
-            </div>
-          </div>
-        )}
-
-        <AnimatePresence mode="wait">
-          {/* Simplified condition: Removed !isLoading check */}
-          {analysisResults && submittedFormData && !error && (
-            <motion.div
-              key="report"
-              variants={containerVariants}
-              initial="hidden"
-              animate="visible"
-              exit="exit" // Restore exit animation
-            >
-              {/* Render AnalysisHeader if analysisResults exist; header handles null apolloData */}
-              <AnalysisHeader
-                apolloData={analysisResults?.apolloData}
-                businessName={submittedFormData?.businessName}
-                website={submittedFormData?.website}
-              />
-              <BusinessAnalysisReport
-                results={analysisResults}
-                industry={submittedFormData.industry}
-                submittedData={submittedFormData}
-              />
-              <div className="text-center mt-8">
-                <motion.button
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
+            {/* Show Error State */}
+            {error && !isLoading && (
+              <motion.div
+                key="error"
+                variants={containerVariants}
+                initial="hidden"
+                animate="visible"
+                exit="exit"
+                className="max-w-2xl mx-auto p-4 bg-red-100 dark:bg-red-900/30 border border-red-300 dark:border-red-700 text-red-700 dark:text-red-300 rounded-lg my-6"
+              >
+                <p className="font-medium">Error: {error}</p>
+                <button
                   onClick={() => {
-                    setAnalysisResults(null);
+                    setError(null);
+                    setIsLoading(false);
+                    setInsitesReportId(null);
                     setSubmittedFormData(null);
+                    setAnalysisResults(null);
                   }}
-                  className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition duration-200"
+                  className="mt-2 text-sm underline hover:text-red-500"
                 >
-                  Create Another Analysis
-                </motion.button>
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
+                  Try again
+                </button>
+              </motion.div>
+            )}
+
+            {/* Show Report - Reverted to single column */}
+            {analysisResults && submittedFormData && !error && (
+              <motion.div
+                key="report"
+                variants={containerVariants}
+                initial="hidden"
+                animate="visible"
+                exit="exit"
+                // Removed grid layout classes
+              >
+                <AnalysisHeader
+                  apolloData={analysisResults?.apolloData}
+                  businessName={submittedFormData?.businessName}
+                  website={submittedFormData?.website}
+                />
+                <BusinessAnalysisReport
+                  results={analysisResults}
+                  industry={submittedFormData.industry}
+                  submittedData={submittedFormData}
+                />
+                <div className="text-center mt-8">
+                  <motion.button
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    onClick={() => {
+                      setAnalysisResults(null);
+                      setSubmittedFormData(null);
+                      setInsitesReportId(null);
+                    }}
+                    className="px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition duration-200"
+                  >
+                    Create Another Analysis
+                  </motion.button>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
       </div>
       <Toaster />
     </div>
