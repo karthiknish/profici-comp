@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { GoogleGenerativeAI } from "@google/generative-ai";
-import clientPromise from "@/lib/mongodb"; // Assuming your MongoDB client promise is here
+import { connectToDatabase } from "@/lib/mongodb"; // Import the connect function
 
 const geminiApiKey = process.env.GEMINI_API_KEY;
 const MONGODB_DB_NAME = process.env.MONGODB_DB_NAME; // Use the correct env variable name
@@ -91,8 +91,9 @@ export async function POST(request) {
 
     // --- MongoDB Interaction ---
     try {
-      mongoClient = await clientPromise;
-      db = mongoClient.db(MONGODB_DB_NAME); // Use the correct variable name
+      // mongoClient = await clientPromise; // Remove old client promise usage
+      // db = mongoClient.db(MONGODB_DB_NAME); // Remove old db assignment
+      const { db } = await connectToDatabase(); // Use the connect function to get db directly
       const interactionsCollection = db.collection("chat_interactions");
 
       const interaction = {
