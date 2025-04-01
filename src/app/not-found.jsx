@@ -10,7 +10,7 @@ export default function NotFound() {
         404 - Page Not Found
       </h1>
       <p className="text-lg text-muted-foreground mb-6">
-        Oops! The page you're looking for doesn't seem to exist.
+        Oops! The page you&apos;re looking for doesn&apos;t seem to exist.
       </p>
       <Button asChild>
         <Link href="/">Go back to Home</Link>
