@@ -36,10 +36,10 @@ export default function ConsultancySection() {
         </h2>
         <p className="text-lg text-muted-foreground mb-8">
           This AI tool provides valuable initial insights, but true growth often
-          requires tailored strategic guidance. Profici's expert consultants
-          partner with UK SMEs, offering Digital Marketing and Fractional
-          C-Suite services to implement strategies and achieve sustainable
-          success.
+          requires tailored strategic guidance. Profici&apos;s expert
+          consultants partner with UK SMEs, offering Digital Marketing and
+          Fractional C-Suite services to implement strategies and achieve
+          sustainable success.
         </p>
         <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
           <Button size="lg" asChild>
