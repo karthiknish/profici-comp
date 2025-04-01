@@ -38,18 +38,15 @@ export default function Footer() {
             </p>
           </div>
           <div className="flex flex-col md:flex-row space-y-2 md:space-y-0 md:space-x-6 items-center text-sm text-muted-foreground">
+            {/* Updated Links */}
             <Link
-              href="https://profici.co.uk/terms"
-              target="_blank"
-              rel="noopener noreferrer"
+              href="/terms-conditions"
               className="hover:text-foreground transition"
             >
               Terms of Service
             </Link>
             <Link
-              href="https://profici.co.uk/privacy"
-              target="_blank"
-              rel="noopener noreferrer"
+              href="/privacy-policy"
               className="hover:text-foreground transition"
             >
               Privacy Policy
