@@ -119,7 +119,7 @@ export default function SignInPage() {
             </Button>
             {/* eslint-disable-next-line react/no-unescaped-entities */}
             <p className="text-xs text-center text-muted-foreground">
-              Don't have an account?
+              Don&apos;t have an account?
               <Link
                 href="/auth/signup"
                 className="underline hover:text-primary"
