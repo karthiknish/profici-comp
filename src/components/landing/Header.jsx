@@ -16,13 +16,18 @@ export default function Header() {
       <div className="container flex h-14 max-w-screen-2xl items-center px-6">
         <div className="mr-4 flex">
           <Link href="/" className="mr-6 flex items-center space-x-2">
-            <span className="font-bold text-primary">
-              Profici Competitor Analysis
-            </span>
+            {/* Corrected Icon */}
+            <span className="font-bold text-primary">Profici AI Analysis</span>
           </Link>
         </div>
         {/* Updated Nav Links for Scrolling */}
         <nav className="hidden md:flex items-center gap-6 text-sm text-muted-foreground flex-grow">
+          <Link
+            href="#tool-insights" // Added link to Tool Insights section
+            className="transition-colors hover:text-foreground"
+          >
+            Analysis Insights
+          </Link>
           <Link
             href="#features"
             className="transition-colors hover:text-foreground"
