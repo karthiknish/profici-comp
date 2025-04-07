@@ -22,20 +22,16 @@ export async function POST(request) {
 
   try {
     console.log(`Fetching Apollo data for domain: ${domain}`);
-    // Changed to GET and added params for domain
     const response = await axios.get(
-      "https://api.apollo.io/v1/organizations/enrich",
+      "https://api.apollo.io/api/v1/organizations/enrich", // Fixed API endpoint URL
       {
         params: {
           domain: domain,
-          api_key: apiKey, // Send API key as a query param as well, common practice
+          api_key: apiKey,
         },
         headers: {
-          "Content-Type": "application/json", // Keep Content-Type for consistency, though less critical for GET
+          "Content-Type": "application/json",
           "Cache-Control": "no-cache",
-          // Apollo might prefer the key in headers OR params, sending in both covers bases
-          // If issues persist, try removing one or the other based on Apollo docs.
-          "X-Api-Key": apiKey,
         },
       }
     );
@@ -67,14 +63,13 @@ export async function POST(request) {
       state: orgData.state || null,
       country: orgData.country || null,
       founded_year: orgData.founded_year || null,
-      annual_revenue: orgData.annual_revenue || null, // Added
-      annual_revenue_printed: orgData.annual_revenue_printed || null, // Added
-      total_funding: orgData.total_funding || null, // Added
-      total_funding_printed: orgData.total_funding_printed || null, // Added
-      latest_funding_stage: orgData.latest_funding_stage || null, // Added
-      technology_names: orgData.technology_names || [], // Added
-      departmental_head_count: orgData.departmental_head_count || {}, // Added
-      // Consider adding funding_events if needed, but it's an array of objects
+      annual_revenue: orgData.annual_revenue || null,
+      annual_revenue_printed: orgData.annual_revenue_printed || null,
+      total_funding: orgData.total_funding || null,
+      total_funding_printed: orgData.total_funding_printed || null,
+      latest_funding_stage: orgData.latest_funding_stage || null,
+      technology_names: orgData.technology_names || [],
+      departmental_head_count: orgData.departmental_head_count || {},
     };
 
     console.log(`Successfully fetched Apollo data for ${domain}`);
@@ -84,6 +79,16 @@ export async function POST(request) {
       "Error fetching data from Apollo API:",
       error.response?.data || error.message
     );
+    // Check if it's a 401 specifically, which indicates authentication issues
+    if (error.response?.status === 401) {
+      console.error(`Apollo API authentication failed for domain: ${domain}`);
+      return NextResponse.json(
+        {
+          error: "Apollo API authentication failed. Please check your API key.",
+        },
+        { status: 401 }
+      );
+    }
     // Check if it's a 404 specifically, might mean domain not found by Apollo
     if (error.response?.status === 404) {
       console.warn(`Apollo API returned 404 for domain: ${domain}`);
