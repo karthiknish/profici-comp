@@ -17,18 +17,34 @@ export const getJsonSafe = (result, promptName) => {
     // 1. Try to get the raw text response
     if (result?.response?.text && typeof result.response.text === "function") {
       rawText = result.response.text();
+    } else if (result?.response?.candidates?.[0]?.content?.parts?.[0]?.text) {
+      // Fallback for slightly different structures if text() function is missing but content exists
+      rawText = result.response.candidates[0].content.parts[0].text;
+      console.warn(`Used fallback text extraction for ${promptName}`);
     } else {
       console.error(
-        `Gemini result missing response or text function for ${promptName}:`,
-        result
+        `Gemini result missing response text for ${promptName}:`,
+        JSON.stringify(result, null, 2) // Log the structure for debugging
       );
       return { error: `AI response structure invalid for ${promptName}.` };
     }
 
-    // 2. Try to parse the text as JSON
+    // 2. Process the raw text
     if (typeof rawText === "string") {
+      const cleanedText = rawText.replace(/^```json\s*|```\s*$/g, "").trim();
+
+      // 2a. Check if it looks like JSON before attempting to parse
+      if (!cleanedText.startsWith("{") && !cleanedText.startsWith("[")) {
+        console.warn(
+          `Response for ${promptName} does not appear to be JSON. Returning as info/error text:`,
+          cleanedText
+        );
+        // Return it structured, indicating it's not the expected JSON data
+        return { info: `AI provided text instead of JSON: ${cleanedText}` };
+      }
+
+      // 2b. Try to parse the cleaned text as JSON
       try {
-        const cleanedText = rawText.replace(/^```json\s*|```\s*$/g, "").trim();
         const parsedJson = JSON.parse(cleanedText);
         return parsedJson;
       } catch (parseError) {
@@ -36,8 +52,10 @@ export const getJsonSafe = (result, promptName) => {
           `Initial JSON parse failed for ${promptName}:`,
           parseError.message
         );
+        // Only attempt recovery if it was a SyntaxError (malformed JSON)
         if (parseError instanceof SyntaxError) {
           console.log(`Attempting JSON recovery for ${promptName}...`);
+          // Recovery Attempt 1: Extract between first '{' and last '}'
           try {
             const firstBraceIndex = cleanedText.indexOf("{");
             const lastBraceIndex = cleanedText.lastIndexOf("}");
@@ -48,18 +66,17 @@ export const getJsonSafe = (result, promptName) => {
               );
               const recoveredJson = JSON.parse(potentialJson);
               console.warn(
-                `Successfully recovered JSON for ${promptName} by extracting content between first '{' and last '}'.`
+                `Successfully recovered JSON for ${promptName} (brace extraction).`
               );
               return recoveredJson;
             } else {
-              throw new Error(
-                "Could not find valid start/end braces for JSON recovery."
-              );
+              throw new Error("Could not find valid start/end braces.");
             }
           } catch (recoveryError) {
             console.warn(
-              `Initial JSON recovery failed for ${promptName}: ${recoveryError.message}. Trying newline replacement...`
+              `Recovery 1 failed for ${promptName}: ${recoveryError.message}. Trying newline replacement...`
             );
+            // Recovery Attempt 2: Newline replacement within extracted braces
             try {
               const firstBraceIndex = cleanedText.indexOf("{");
               const lastBraceIndex = cleanedText.lastIndexOf("}");
@@ -68,18 +85,19 @@ export const getJsonSafe = (result, promptName) => {
                   firstBraceIndex,
                   lastBraceIndex + 1
                 );
+                // Be more aggressive with cleaning potentially problematic characters within strings
                 const newlineCleanedJson = potentialJson
-                  .replace(/\\n/g, " ")
-                  .replace(/\n/g, " ");
+                  .replace(/\\n/g, " ") // Replace escaped newlines
+                  .replace(/\n/g, " ") // Replace literal newlines
+                  .replace(/\\"/g, '"'); // Simplify escaped quotes if they cause issues (use cautiously)
+
                 const finalRecoveredJson = JSON.parse(newlineCleanedJson);
                 console.warn(
-                  `Successfully recovered JSON for ${promptName} after newline replacement.`
+                  `Successfully recovered JSON for ${promptName} (newline replacement).`
                 );
                 return finalRecoveredJson;
               } else {
-                throw new Error(
-                  "Could not find valid braces for newline replacement recovery."
-                );
+                throw new Error("Could not find valid braces for recovery 2.");
               }
             } catch (finalRecoveryError) {
               console.error(
@@ -88,14 +106,16 @@ export const getJsonSafe = (result, promptName) => {
               );
               console.error(
                 `Raw text received for ${promptName} (final recovery failed):`,
-                rawText
+                rawText // Log the original raw text
               );
               return {
-                error: `AI response for ${promptName} was not valid JSON and all recovery attempts failed.`,
+                error: `AI response for ${promptName} was not valid JSON and recovery failed.`,
+                rawResponse: rawText, // Include raw response for inspection
               };
             }
           }
         } else {
+          // Handle non-SyntaxErrors during parsing
           console.error(
             `Non-syntax error parsing JSON for ${promptName}:`,
             parseError
@@ -106,12 +126,14 @@ export const getJsonSafe = (result, promptName) => {
           );
           return {
             error: `AI response for ${promptName} caused a non-JSON parsing error: ${parseError.message}`,
+            rawResponse: rawText,
           };
         }
       }
     } else {
+      // Handle cases where rawText is not a string after extraction attempts
       console.error(
-        `Gemini response.text() did not return a string for ${promptName}:`,
+        `Extracted AI response was not a string for ${promptName}:`,
         rawText
       );
       return {
@@ -119,8 +141,9 @@ export const getJsonSafe = (result, promptName) => {
       };
     }
   } catch (e) {
+    // Catch any other unexpected errors during the process
     console.error(
-      `Error processing Gemini response for ${promptName}:`,
+      `Unexpected error processing Gemini response for ${promptName}:`,
       e,
       result
     );
@@ -137,78 +160,36 @@ export const fetchApolloDataForDomain = async (domain) => {
     return null;
   }
 
-  // --- Development Mode: Use Local Files ---
-  if (process.env.NODE_ENV === "development") {
-    console.log(
-      `>>> [DEV MODE] Attempting to load local Apollo data for: ${domain}`
-    );
-    try {
-      // Sanitize domain for filename (replace non-alphanumeric with underscore)
-      const safeFilenamePart = domain
-        .replace(/[^a-z0-9.-]/gi, "_")
-        .toLowerCase();
-      const filename = `apollo-${safeFilenamePart}.json`;
-      // Construct the full path relative to the project root
-      // NOTE: This assumes the CWD is the project root where `apollo_responses` lives.
-      // Adjust if the execution context is different.
-      const filePath = path.join(process.cwd(), "apollo_responses", filename);
+  // Always call the live API endpoint, regardless of NODE_ENV
+  try {
+    console.log(`>>> Calling /api/apollo-info for domain: ${domain}`);
+    const apolloResponse = await fetch(`${getBaseUrl()}/api/apollo-info`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ domain: domain }),
+    });
 
-      console.log(`>>> [DEV MODE] Reading file: ${filePath}`);
-      const fileContent = await fs.readFile(filePath, "utf-8");
-      const localData = JSON.parse(fileContent);
+    if (!apolloResponse.ok) {
+      console.warn(
+        `Apollo info fetch failed for ${domain} with status: ${apolloResponse.status}`
+      );
+      return null;
+    } else {
+      const apolloResult = await apolloResponse.json();
+      const apolloData = apolloResult.apolloData;
       console.log(
-        `>>> [DEV MODE] Successfully loaded local Apollo data for ${domain}`
+        `>>> Apollo data fetched successfully for ${domain} (or null if not found).`
       );
-      return localData; // Return the parsed local data
-    } catch (error) {
-      if (error.code === "ENOENT") {
-        console.warn(
-          `>>> [DEV MODE] Local Apollo file not found for ${domain}. File expected at: ${path.join(
-            "apollo_responses",
-            `apollo-${domain.replace(/[^a-z0-9.-]/gi, "_").toLowerCase()}.json`
-          )}`
-        );
-      } else {
-        console.error(
-          `>>> [DEV MODE] Error reading/parsing local Apollo file for ${domain}:`,
-          error
-        );
-      }
-      // Fallback to null if local file fails in dev mode (or could choose to call API)
-      return null;
+      return apolloData;
     }
+  } catch (apolloError) {
+    console.error(
+      `Error calling Apollo info API route for ${domain}:`,
+      apolloError
+    );
+    return null;
   }
-  // --- Production Mode: Call Live API ---
-  else {
-    try {
-      console.log(`>>> Calling /api/apollo-info for domain: ${domain}`);
-      const apolloResponse = await fetch(`${getBaseUrl()}/api/apollo-info`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ domain: domain }),
-      });
-
-      if (!apolloResponse.ok) {
-        console.warn(
-          `Apollo info fetch failed for ${domain} with status: ${apolloResponse.status}`
-        );
-        return null;
-      } else {
-        const apolloResult = await apolloResponse.json();
-        const apolloData = apolloResult.apolloData;
-        console.log(
-          `>>> Apollo data fetched successfully for ${domain} (or null if not found).`
-        );
-        return apolloData;
-      }
-    } catch (apolloError) {
-      console.error(
-        `Error calling Apollo info API route for ${domain}:`,
-        apolloError
-      );
-      return null;
-    }
-  } // <<< Add missing closing brace for the 'else' block
+  // Removed the 'else' block and the preceding 'if (NODE_ENV === "development")' block
 };
 
 // Helper function to save report to MongoDB

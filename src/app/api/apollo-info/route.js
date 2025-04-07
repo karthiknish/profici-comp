@@ -22,15 +22,19 @@ export async function POST(request) {
 
   try {
     console.log(`Fetching Apollo data for domain: ${domain}`);
-    const response = await axios.post(
+    // Changed to GET and added params for domain
+    const response = await axios.get(
       "https://api.apollo.io/v1/organizations/enrich",
       {
-        domain: domain,
-      },
-      {
+        params: {
+          domain: domain,
+          api_key: apiKey, // Send API key as a query param as well, common practice
+        },
         headers: {
-          "Content-Type": "application/json",
+          "Content-Type": "application/json", // Keep Content-Type for consistency, though less critical for GET
           "Cache-Control": "no-cache",
+          // Apollo might prefer the key in headers OR params, sending in both covers bases
+          // If issues persist, try removing one or the other based on Apollo docs.
           "X-Api-Key": apiKey,
         },
       }
