@@ -17,8 +17,8 @@ const markdownComponents = {
   h4: ({ node, ...props }) => (
     <h4 className="text-base font-semibold mt-3 mb-2" {...props} />
   ),
-  // Reverted paragraph renderer to default
-  p: ({ node, ...props }) => <p className="mb-2 text-sm" {...props} />,
+  // Remove bottom margin from paragraphs for tighter line spacing
+  p: ({ node, ...props }) => <p className="text-sm" {...props} />, // Removed mb-2
   // Reverted ul renderer to default (with bullets)
   ul: ({ node, ...props }) => (
     <ul className="list-disc pl-5 space-y-1 text-sm mb-3" {...props} />

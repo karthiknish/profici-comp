@@ -9,85 +9,197 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-// Remove Table imports if RenderMarkdownTable is removed or moved
-// import {
-//   Table,
-//   TableBody,
-//   TableCell,
-//   TableHead,
-//   TableHeader,
-//   TableRow,
-// } from "@/components/ui/table";
-import { parseMarkdownTable, parsePercentage } from "@/utils/parsing";
-import PercentageMetric from "@/components/ui/PercentageMetric"; // Import the new component
 import {
-  Percent,
   ThumbsUp,
   ThumbsDown,
   Target,
   AlertTriangle,
-  TrendingUp, // Added for comparison
-  TrendingDown as TrendingDownIcon, // Added for comparison
-} from "lucide-react"; // Add SWOT icons
-// Remove ReactMarkdown imports
-// import ReactMarkdown from "react-markdown";
-// import remarkGfm from "remark-gfm";
-// import rehypeRaw from "rehype-raw";
+  Users,
+  BarChart2,
+  CreditCard,
+  MessageSquare,
+  Info,
+  GitCompareArrows,
+  Star,
+} from "lucide-react";
+// Import the basic helpers
 import {
-  extractListItems,
-  extractSectionContent,
-  extractSubheadingListItems,
-} from "@/utils/parsing"; // Add extractSubheadingListItems
-import MarkdownRenderer from "@/components/ui/MarkdownRenderer"; // Import new component
-import MarkdownTableRenderer from "@/components/ui/MarkdownTableRenderer"; // Import new component
+  FormattedText,
+  JsonList,
+  JsonTable,
+} from "@/components/ui/JsonRenderHelpers";
+import CompetitorComparisonBarChart from "@/components/charts/CompetitorComparisonBarChart"; // Import the new chart
 
-// Remove RenderMarkdownTable definition
-/*
-const RenderMarkdownTable = ({ tableData }) => { ... };
-*/
+// --- Specific Rendering Components for Competitor JSON Structure ---
+
+const RenderSwot = ({ data }) => {
+  if (!data) return null;
+  return (
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+      {data.strengths && (
+        <div className="p-4 border rounded-lg bg-green-50 dark:bg-green-900/30">
+          <h4 className="font-semibold mb-2 flex items-center text-green-800 dark:text-green-300">
+            <ThumbsUp className="mr-2 h-4 w-4" /> Strengths
+          </h4>
+          <JsonList
+            items={data.strengths}
+            className="list-disc pl-5 space-y-1 text-sm text-green-700 dark:text-green-400"
+          />
+        </div>
+      )}
+      {data.weaknesses && (
+        <div className="p-4 border rounded-lg bg-red-50 dark:bg-red-900/30">
+          <h4 className="font-semibold mb-2 flex items-center text-red-800 dark:text-red-300">
+            <ThumbsDown className="mr-2 h-4 w-4" /> Weaknesses
+          </h4>
+          <JsonList
+            items={data.weaknesses}
+            className="list-disc pl-5 space-y-1 text-sm text-red-700 dark:text-red-400"
+          />
+        </div>
+      )}
+      {data.opportunities && (
+        <div className="p-4 border rounded-lg bg-blue-50 dark:bg-blue-900/30">
+          <h4 className="font-semibold mb-2 flex items-center text-blue-800 dark:text-blue-300">
+            <Target className="mr-2 h-4 w-4" /> Opportunities
+          </h4>
+          <JsonList
+            items={data.opportunities}
+            className="list-disc pl-5 space-y-1 text-sm text-blue-700 dark:text-blue-400"
+          />
+        </div>
+      )}
+      {data.threats && (
+        <div className="p-4 border rounded-lg bg-yellow-50 dark:bg-yellow-900/30">
+          <h4 className="font-semibold mb-2 flex items-center text-yellow-800 dark:text-yellow-300">
+            <AlertTriangle className="mr-2 h-4 w-4" /> Threats
+          </h4>
+          <JsonList
+            items={data.threats}
+            className="list-disc pl-5 space-y-1 text-sm text-yellow-700 dark:text-yellow-400"
+          />
+        </div>
+      )}
+    </div>
+  );
+};
+
+const RenderApolloComparison = ({ data }) => {
+  if (!Array.isArray(data) || data.length === 0) return null;
+  return (
+    <div className="space-y-3">
+      {data.map((compData, idx) => (
+        <div key={idx} className="p-3 border rounded-md bg-muted/50">
+          <h4 className="font-semibold text-sm mb-1">{compData.name}</h4>
+          {compData.confirmations?.length > 0 && (
+            <div className="mt-1">
+              <strong className="text-xs uppercase text-muted-foreground">
+                Confirmations:
+              </strong>
+              <JsonList items={compData.confirmations} />
+            </div>
+          )}
+          {compData.discrepancies?.length > 0 && (
+            <div className="mt-1">
+              <strong className="text-xs uppercase text-muted-foreground">
+                Discrepancies:
+              </strong>
+              <JsonList items={compData.discrepancies} />
+            </div>
+          )}
+          {compData.insights?.length > 0 && (
+            <div className="mt-1">
+              <strong className="text-xs uppercase text-muted-foreground">
+                New Insights:
+              </strong>
+              <JsonList items={compData.insights} />
+            </div>
+          )}
+        </div>
+      ))}
+    </div>
+  );
+};
+
+const RenderKeyDifferences = ({ data }) => {
+  if (!data) return null;
+  return (
+    <div className="space-y-2 text-sm p-3 border rounded-md bg-muted/50">
+      {data.digitalPresence && (
+        <p>
+          <strong className="font-medium">Digital Presence:</strong>{" "}
+          <FormattedText text={data.digitalPresence} />
+        </p>
+      )}
+      {data.pricing && (
+        <p>
+          <strong className="font-medium">Pricing:</strong>{" "}
+          <FormattedText text={data.pricing} />
+        </p>
+      )}
+      {data.marketingChannels && (
+        <p>
+          <strong className="font-medium">Marketing Channels:</strong>{" "}
+          <FormattedText text={data.marketingChannels} />
+        </p>
+      )}
+      {data.overall && (
+        <p className="mt-2 italic">
+          <strong className="font-medium not-italic">Overall:</strong>{" "}
+          <FormattedText text={data.overall} />
+        </p>
+      )}
+    </div>
+  );
+};
+
+const RenderAdvantageOpportunities = ({ data }) => {
+  if (!Array.isArray(data) || data.length === 0) return null;
+  return (
+    // Added styled container
+    <div className="space-y-3 p-4 border rounded-lg bg-blue-50 dark:bg-blue-900/30">
+      {data.map((opp, index) => (
+        <div
+          key={index}
+          className="text-sm border-b border-dashed pb-2 last:border-b-0 last:pb-0"
+        >
+          {" "}
+          {/* Added border between items */}
+          <strong className="font-semibold text-blue-800 dark:text-blue-300 block mb-1">
+            {" "}
+            {/* Styled description */}
+            {opp.description || `Opportunity ${index + 1}`}
+          </strong>
+          {opp.action && (
+            <div className="flex items-start mt-1">
+              <strong className="text-xs uppercase text-muted-foreground w-16 shrink-0">
+                {" "}
+                {/* Fixed width label */}
+                Action:
+              </strong>
+              <FormattedText text={opp.action} className="flex-1" />{" "}
+              {/* Use FormattedText */}
+            </div>
+          )}
+          {opp.outcome && (
+            <div className="flex items-start mt-1">
+              <strong className="text-xs uppercase text-muted-foreground w-16 shrink-0">
+                {" "}
+                {/* Fixed width label */}
+                Outcome:
+              </strong>
+              <FormattedText text={opp.outcome} className="flex-1" />{" "}
+              {/* Use FormattedText */}
+            </div>
+          )}
+        </div>
+      ))}
+    </div>
+  );
+};
+// --- Main Component ---
 
 const CompetitorAnalysisSection = ({ data }) => {
-  // Attempt to parse the specific table first
-  const overviewData = parseMarkdownTable(data, "Competitor Overview");
-  const digitalPresenceData = parseMarkdownTable(
-    data,
-    "Digital Presence Comparison"
-  );
-  const pricingData = parseMarkdownTable(data, "Pricing Strategy Analysis");
-  const marketingChannelData = parseMarkdownTable(
-    data,
-    "Marketing Channel Effectiveness"
-  );
-  // Extract SWOT and Opportunities using a generic markdown approach if tables fail or aren't used
-  const swotRegex =
-    /##\s*SWOT Analysis[\s\S]*?(?=##\s*Business vs\. Competitors: Key Differences|##\s*Competitive Advantage Opportunities|$)/; // Updated regex boundary
-  const swotMatch = data?.match(swotRegex);
-  // Instead of just getting the whole block, parse individual lists
-  const strengths = swotMatch
-    ? extractListItems(swotMatch[0], "Strengths")
-    : null;
-  const weaknesses = swotMatch
-    ? extractListItems(swotMatch[0], "Weaknesses")
-    : null;
-  const opportunities = swotMatch
-    ? extractListItems(swotMatch[0], "Opportunities")
-    : null;
-  const threats = swotMatch ? extractListItems(swotMatch[0], "Threats") : null;
-
-  // Extract the new comparison section content
-  const vsCompetitorsContent = extractSectionContent(
-    data,
-    "Business vs. Competitors: Key Differences"
-  );
-
-  // Extract Competitive Advantage Opportunities section
-  const opportunitiesRegex =
-    /##\s*Competitive Advantage Opportunities[\s\S]*?$/;
-  const opportunitiesMatch = data?.match(opportunitiesRegex);
-  const opportunitiesContent = opportunitiesMatch
-    ? opportunitiesMatch[0] // Keep the full markdown block including the title
-    : null;
-
   const itemVariants = {
     hidden: { opacity: 0, y: 10 },
     visible: (i) => ({
@@ -97,176 +209,174 @@ const CompetitorAnalysisSection = ({ data }) => {
     }),
   };
 
-  // Determine if we should show the raw markdown fallback
-  const showFallback =
-    !overviewData &&
-    !digitalPresenceData &&
-    !pricingData &&
-    !marketingChannelData &&
-    !(strengths || weaknesses || opportunities || threats) && // Check parsed SWOT lists
-    !vsCompetitorsContent && // Check for the new comparison section
-    !opportunitiesContent;
+  const hasData = data && !data.error && typeof data === "object";
 
   return (
-    <Card className="w-full">
-      <CardHeader>
+    <Card className="w-full border-none shadow-none">
+      {" "}
+      {/* Use main card from parent */}
+      {/* <CardHeader>
         <CardTitle>Competitor Analysis</CardTitle>
-        <CardDescription>
-          Analysis of key competitors in the UK market.
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        {showFallback ? (
-          <div className="prose dark:prose-invert max-w-none text-sm">
-            {/* Use MarkdownRenderer for fallback */}
-            <MarkdownRenderer content={data} />
-          </div>
-        ) : (
+        <CardDescription>Analysis of key competitors in the UK market.</CardDescription>
+      </CardHeader> */}
+      <CardContent className="p-0">
+        {hasData ? (
           <motion.div
             initial="hidden"
             animate="visible"
             variants={{ visible: { transition: { staggerChildren: 0.1 } } }}
             className="space-y-6"
           >
-            {overviewData && (
+            {/* Render each section using specific layout and helpers */}
+            {data.competitorOverview && (
               <motion.div variants={itemVariants} custom={0}>
-                <h3 className="text-xl font-semibold mb-4 pb-2 border-b flex items-center">
-                  Competitor Overview (UK Est.)
+                <h3 className="text-lg font-semibold mb-3 flex items-center">
+                  <Users className="mr-2 h-5 w-5 text-primary" />{" "}
+                  {data.competitorOverview.title || "Competitor Overview"}
                 </h3>
-                {/* Use MarkdownTableRenderer */}
-                <MarkdownTableRenderer tableData={overviewData} />
-              </motion.div>
-            )}
-            {digitalPresenceData && (
-              <motion.div
-                variants={itemVariants}
-                custom={1}
-                className="mt-6 pt-6 border-t"
-              >
-                <h3 className="text-xl font-semibold mb-4 pb-2 border-b flex items-center">
-                  Digital Presence Comparison (UK Est.)
-                </h3>
-                {/* Use MarkdownTableRenderer */}
-                <MarkdownTableRenderer tableData={digitalPresenceData} />
-              </motion.div>
-            )}
-            {pricingData && (
-              <motion.div
-                variants={itemVariants}
-                custom={2}
-                className="mt-6 pt-6 border-t"
-              >
-                <h3 className="text-xl font-semibold mb-4 pb-2 border-b flex items-center">
-                  Pricing Strategy Analysis (UK Est.)
-                </h3>
-                {/* Use MarkdownTableRenderer */}
-                <MarkdownTableRenderer tableData={pricingData} />
-              </motion.div>
-            )}
-            {marketingChannelData && (
-              <motion.div
-                variants={itemVariants}
-                custom={3}
-                className="mt-6 pt-6 border-t"
-              >
-                <h3 className="text-xl font-semibold mb-4 pb-2 border-b flex items-center">
-                  Marketing Channel Effectiveness (UK Est.)
-                </h3>
-                {/* Use MarkdownTableRenderer */}
-                <MarkdownTableRenderer tableData={marketingChannelData} />
+                <JsonTable data={data.competitorOverview} />
               </motion.div>
             )}
 
-            {/* SWOT Analysis 2x2 Grid */}
-            {(strengths || weaknesses || opportunities || threats) && (
-              <motion.div
-                variants={itemVariants}
-                custom={4}
-                className="mt-6 pt-6 border-t"
-              >
-                <h3 className="text-xl font-semibold mb-4 pb-2 border-b flex items-center">
-                  SWOT Analysis (UK Context)
+            {data.digitalPresence && (
+              <motion.div variants={itemVariants} custom={1}>
+                <h3 className="text-lg font-semibold mb-3 flex items-center">
+                  <BarChart2 className="mr-2 h-5 w-5 text-primary" />{" "}
+                  {data.digitalPresence.title || "Digital Presence"}
                 </h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {/* Strengths */}
-                  <div className="p-4 border rounded-lg bg-green-50 dark:bg-green-900/30">
-                    <h4 className="font-semibold mb-2 flex items-center text-green-800 dark:text-green-300">
-                      <ThumbsUp className="mr-2 h-4 w-4" /> Strengths
-                    </h4>
-                    <ul className="list-disc pl-5 space-y-1 text-sm text-green-700 dark:text-green-400">
-                      {strengths?.map((item, index) => (
-                        <li key={`s-${index}`}>{item}</li>
-                      )) ?? <li>N/A</li>}
-                    </ul>
-                  </div>
-                  {/* Weaknesses */}
-                  <div className="p-4 border rounded-lg bg-red-50 dark:bg-red-900/30">
-                    <h4 className="font-semibold mb-2 flex items-center text-red-800 dark:text-red-300">
-                      <ThumbsDown className="mr-2 h-4 w-4" /> Weaknesses
-                    </h4>
-                    <ul className="list-disc pl-5 space-y-1 text-sm text-red-700 dark:text-red-400">
-                      {weaknesses?.map((item, index) => (
-                        <li key={`w-${index}`}>{item}</li>
-                      )) ?? <li>N/A</li>}
-                    </ul>
-                  </div>
-                  {/* Opportunities */}
-                  <div className="p-4 border rounded-lg bg-blue-50 dark:bg-blue-900/30">
-                    <h4 className="font-semibold mb-2 flex items-center text-blue-800 dark:text-blue-300">
-                      <Target className="mr-2 h-4 w-4" /> Opportunities
-                    </h4>
-                    <ul className="list-disc pl-5 space-y-1 text-sm text-blue-700 dark:text-blue-400">
-                      {opportunities?.map((item, index) => (
-                        <li key={`o-${index}`}>{item}</li>
-                      )) ?? <li>N/A</li>}
-                    </ul>
-                  </div>
-                  {/* Threats */}
-                  <div className="p-4 border rounded-lg bg-yellow-50 dark:bg-yellow-900/30">
-                    <h4 className="font-semibold mb-2 flex items-center text-yellow-800 dark:text-yellow-300">
-                      <AlertTriangle className="mr-2 h-4 w-4" /> Threats
-                    </h4>
-                    <ul className="list-disc pl-5 space-y-1 text-sm text-yellow-700 dark:text-yellow-400">
-                      {threats?.map((item, index) => (
-                        <li key={`t-${index}`}>{item}</li>
-                      )) ?? <li>N/A</li>}
-                    </ul>
-                  </div>
+                {/* Add Comparison Charts */}
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
+                  <CompetitorComparisonBarChart
+                    data={data.digitalPresence}
+                    dataKey="traffic"
+                    label="Est. Monthly Traffic"
+                  />
+                  <CompetitorComparisonBarChart
+                    data={data.digitalPresence}
+                    dataKey="following"
+                    label="Social Following"
+                  />
+                  <CompetitorComparisonBarChart
+                    data={data.digitalPresence}
+                    dataKey="rating"
+                    label="Review Rating"
+                    unit="/5"
+                  />
+                  <CompetitorComparisonBarChart
+                    data={data.competitorOverview} // Use overview data for DA
+                    dataKey="authority"
+                    label="Website Authority (DA)"
+                    unit="/100"
+                  />
+                  <CompetitorComparisonBarChart
+                    data={data.competitorOverview} // Use overview data for Market Share
+                    dataKey="marketShare"
+                    label="Market Share"
+                    unit="%"
+                  />
                 </div>
+                {/* Keep the original table as well */}
+                <JsonTable data={data.digitalPresence} />
+                {data.digitalPresence.notes && (
+                  <p className="text-xs italic text-muted-foreground mt-2">
+                    {data.digitalPresence.notes}
+                  </p>
+                )}
               </motion.div>
             )}
 
-            {/* Business vs. Competitors: Key Differences */}
-            {vsCompetitorsContent && (
-              <motion.div
-                variants={itemVariants}
-                custom={5} // Adjust custom index if needed
-                className="mt-6 pt-6 border-t"
-              >
-                <h3 className="text-xl font-semibold mb-4 pb-2 border-b flex items-center">
-                  Business vs. Competitors: Key Differences
+            {data.pricingStrategy && (
+              <motion.div variants={itemVariants} custom={2}>
+                <h3 className="text-lg font-semibold mb-3 flex items-center">
+                  <CreditCard className="mr-2 h-5 w-5 text-primary" />{" "}
+                  {data.pricingStrategy.title || "Pricing Strategy"}
                 </h3>
-                <div className="p-4 border rounded-lg bg-muted/50">
-                  <MarkdownRenderer content={vsCompetitorsContent} />
-                </div>
+                <JsonTable data={data.pricingStrategy} />
+                {data.pricingStrategy.summary && (
+                  <p className="text-sm mt-2">
+                    <FormattedText text={data.pricingStrategy.summary} />
+                  </p>
+                )}
               </motion.div>
             )}
 
-            {/* Competitive Advantage Opportunities */}
-            {opportunitiesContent && (
-              <motion.div
-                variants={itemVariants}
-                custom={6} // Adjust custom index
-                className="mt-6 pt-6 border-t"
-              >
-                {/* Heading is part of the markdown content, rendered by MarkdownRenderer */}
-                <div className="p-4 border rounded-lg bg-muted/50">
-                  {/* Use MarkdownRenderer */}
-                  <MarkdownRenderer content={opportunitiesContent} />
-                </div>
+            {data.marketingChannels && (
+              <motion.div variants={itemVariants} custom={3}>
+                <h3 className="text-lg font-semibold mb-3 flex items-center">
+                  <MessageSquare className="mr-2 h-5 w-5 text-primary" />{" "}
+                  {data.marketingChannels.title || "Marketing Channels"}
+                </h3>
+                <JsonTable data={data.marketingChannels} />
+                {data.marketingChannels.gapOpportunities?.opportunities && (
+                  <div className="mt-3">
+                    <h4 className="font-semibold text-sm mb-1">
+                      {data.marketingChannels.gapOpportunities.title ||
+                        "Channel Gap Opportunities"}
+                    </h4>
+                    <JsonList
+                      items={data.marketingChannels.gapOpportunities.opportunities.map(
+                        (o) => `${o.channel}: ${o.rationale}`
+                      )}
+                    />
+                  </div>
+                )}
+              </motion.div>
+            )}
+
+            {data.apolloComparison?.competitorData && (
+              <motion.div variants={itemVariants} custom={4}>
+                <h3 className="text-lg font-semibold mb-3 flex items-center">
+                  <Info className="mr-2 h-5 w-5 text-primary" /> Data Comparison
+                </h3>
+                <RenderApolloComparison
+                  data={data.apolloComparison.competitorData}
+                />
+              </motion.div>
+            )}
+
+            {data.keyDifferences && (
+              <motion.div variants={itemVariants} custom={5}>
+                <h3 className="text-lg font-semibold mb-3 flex items-center">
+                  <GitCompareArrows className="mr-2 h-5 w-5 text-primary" />{" "}
+                  {data.keyDifferences.title || "Key Differences"}
+                </h3>
+                <RenderKeyDifferences data={data.keyDifferences} />
+              </motion.div>
+            )}
+
+            {data.swotAnalysis && (
+              <motion.div variants={itemVariants} custom={6}>
+                <h3 className="text-lg font-semibold mb-3 flex items-center">
+                  {data.swotAnalysis.title || "SWOT Analysis"}
+                </h3>
+                <RenderSwot data={data.swotAnalysis} />
+              </motion.div>
+            )}
+
+            {data.advantageOpportunities?.opportunities && (
+              <motion.div variants={itemVariants} custom={7}>
+                <h3 className="text-lg font-semibold mb-3 flex items-center">
+                  <Star className="mr-2 h-5 w-5 text-primary" />{" "}
+                  {data.advantageOpportunities.title ||
+                    "Competitive Advantage Opportunities"}
+                </h3>
+                <RenderAdvantageOpportunities
+                  data={data.advantageOpportunities.opportunities}
+                />
               </motion.div>
             )}
           </motion.div>
+        ) : (
+          <div className="prose dark:prose-invert max-w-none text-sm text-center py-4">
+            <p className="text-muted-foreground">
+              No competitor analysis data available or an error occurred.
+            </p>
+            {data?.error && (
+              <p className="text-red-600 dark:text-red-400 mt-2">
+                Error: {data.error}
+              </p>
+            )}
+          </div>
         )}
       </CardContent>
     </Card>

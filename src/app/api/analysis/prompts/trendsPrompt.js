@@ -10,9 +10,68 @@ export const getTrendsPrompt = (
   const insitesReportJson = JSON.stringify(insitesReport || {}, null, 2); // Stringify the passed object
   const apolloDataJson = JSON.stringify(apolloData || {}, null, 2); // Stringify apolloData
 
-  return `IMPORTANT: Respond *only* with the requested Markdown content below. Do not include any introductory sentences, explanations, or conversational text. Replace ALL bracketed placeholders (like [#], [%], £[amount], [keyword], [description], etc.) with realistic, estimated numerical values or specific textual information based on the context provided. DO NOT return the bracket placeholders themselves. Focus analysis on the **United Kingdom (UK)** market. Use UK English spelling (e.g., analyse, optimisation, behaviour, centre).
+  // Define the desired JSON structure
+  const jsonStructure = {
+    volumeTrends: {
+      title: "Estimated Search Volume Trends (UK - Last 12 Months)",
+      headers: [
+        "Keyword",
+        "Avg. Monthly Volume (UK)",
+        "Trend (12 Mo Est.)",
+        "Peak Month Est.",
+        "Notes",
+      ],
+      rows: [
+        // 3-5 rows based on Insites/Apollo keywords
+        {
+          keyword: "[Keyword]",
+          volume: "[#]",
+          trend: "[Up/Down/Stable %]",
+          peakMonth: "[Month]",
+          notes: "[e.g., Seasonality]",
+        },
+      ],
+    },
+    risingQueries: {
+      title: "Related Rising Queries (UK - Breakout/Top)",
+      headers: ["Query", "Type", "Growth (UK Est.)", "Relevance"],
+      rows: [
+        // 5-10 rows based on Insites/Apollo keywords
+        {
+          query: "[Keyword]",
+          type: "[Top/Breakout Est.]",
+          growth: "[+X% / High Est.]",
+          relevance: "[High/Med/Low]",
+        },
+      ],
+    },
+    geoInterest: {
+      title: "Geographic Interest (Top 3 UK Regions/Cities)",
+      headers: ["UK Location", "Relative Interest (0-100 Est.)", "Trend Est."],
+      rows: [
+        // Top 3 rows
+        {
+          location: "[UK Region/City]",
+          interest: "[#]",
+          trend: "[Up/Down/Stable]",
+        },
+      ],
+    },
+    notes:
+      "Data provided are estimations based on general knowledge of UK search patterns, the industry, and provided context data.",
+  };
 
-Generate estimated **UK-specific** search trend data for keywords relevant to ${businessName} (${website}) in the ${industry} industry, considering competitors like ${competitorsString}. Use the following Insites report data and Apollo.io company data for context where relevant:
+  return `**Formatting Instructions:**
+- Respond *only* with a valid JSON object adhering strictly to the structure defined below.
+- **Do not** include any introductory sentences, explanations, apologies, code block markers (\`\`\`), or conversational text outside the JSON structure.
+- **Replace ALL bracketed placeholders** (e.g., \`[#]\`, \`[%]\`, \`[keyword]\`, \`[description]\`, \`£[amount]\`) within the JSON values with realistic, estimated numerical values or specific textual information derived from the provided context (Insites/Apollo data) or reasonable industry estimations if context is missing.
+- **Do not** return the bracket placeholders themselves in the final JSON output. If specific data for a placeholder is unavailable, use \`null\` or a descriptive string like "Data unavailable". Use arrays for table rows as shown.
+- Ensure all analysis, data, and estimations focus specifically on the **United Kingdom (UK)** market.
+- Use UK English spelling (e.g., analyse, optimisation, behaviour, centre).
+
+**Analysis Request:**
+
+Generate estimated **UK-specific** search trend data JSON object for keywords relevant to ${businessName} (${website}) in the ${industry} industry, considering competitors like ${competitorsString}. Use the following Insites report data and Apollo.io company data for context where relevant:
 
 Insites Report Data:
 \`\`\`json
@@ -24,16 +83,10 @@ Apollo.io Company Data:
 ${apolloDataJson}
 \`\`\`
 
-    Format in Markdown with H2 headings and tables. Include:
+**Required JSON Output Structure:**
+\`\`\`json
+${JSON.stringify(jsonStructure, null, 2)}
+\`\`\`
 
-## Estimated Search Volume Trends (UK - Last 12 Months)
-Use a Markdown table for 3-5 core keywords based on Insites organic_search.top_keywords_ranked_for_detail and Apollo keywords: | Keyword        | Avg. Monthly Volume (UK) | Trend (12 Mo Est.) | Peak Month Est. | Notes | |----------------|--------------------------|--------------------|-----------------|-------| | [Keyword from Insites/Apollo] | [Vol from Insites]       | [Up/Down/Stable %] | [Month]         | [e.g., Seasonality] |
-
-## Related Rising Queries (UK - Breakout/Top)
-Use a Markdown table for 5-10 related queries based on Insites organic_search.best_keyword_opportunities and Apollo keywords: | Query                 | Type     | Growth (UK Est.) | Relevance | |-----------------------|----------|------------------|-----------| | [Keyword from Insites Opps/Apollo] | [Top/Breakout Est.] | [+X% / High Est.]| [High/Med/Low] |
-
-## Geographic Interest (Top 3 UK Regions/Cities)
-Use a Markdown table (consider Apollo location: ${apolloData?.city}, ${apolloData?.country}): | UK Location     | Relative Interest (0-100 Est.) | Trend Est. | |-----------------|--------------------------------|------------| | [UK Region/City 1] | [#]                            | [Up/Down/Stable] | | [UK Region/City 2] | [#]                            | [Up/Down/Stable] |
-
-Provide estimated data based on general knowledge of UK search patterns, the industry, and the provided Insites/Apollo data. Clearly state these are estimations.`;
+Fill in the values in the structure above with your analysis and estimations based on the provided data and UK market context. Ensure the final output is a single, valid JSON object.`;
 };

@@ -5,7 +5,8 @@ export const getRecommendationsPrompt = (
   competitorsString,
   insitesReport, // Pass the report object directly
   apolloData, // Add apolloData parameter
-  competitorsApolloData // Add competitorsApolloData parameter
+  competitorsApolloData, // Add competitorsApolloData parameter
+  fullAnalysisContext
 ) => {
   // Safely access nested properties from insitesReport
   const detectedTech = // Combine Insites and Apollo tech data
@@ -25,117 +26,284 @@ export const getRecommendationsPrompt = (
     2
   );
 
-  // Reverted to original complex structure, enhanced C-Suite
-  return `IMPORTANT: Respond *only* with the requested Markdown content below. Do not include any introductory sentences, explanations, or conversational text. Replace ALL bracketed placeholders (like [#], [%], £[amount], [keyword], [description], etc.) with realistic, estimated numerical values or specific textual information based on the context provided. DO NOT return the bracket placeholders themselves. Focus recommendations on the **United Kingdom (UK)** market. Use UK English spelling (e.g., analyse, optimisation, behaviour, centre).
+  // Define the desired JSON structure
+  const jsonStructure = {
+    executiveSummary: {
+      title: "Executive Summary (UK Focus)",
+      priorities: ["Priority 1", "Priority 2", "Priority 3"],
+      outcomes: [
+        "Outcome 1 (e.g., Increase UK market share by X%)",
+        "Outcome 2 (e.g., Improve UK LTV:CAC to Y:1)",
+      ],
+      timeline: "[e.g., 6-12 months Est.]",
+    },
+    digitalMarketingRoadmap: {
+      title: "Digital Marketing Strategy Roadmap (UK Focus)",
+      seo: {
+        title: "Organic Search (SEO) - Next 6 Months (UK)",
+        headers: [
+          "Action",
+          "Priority",
+          "Target UK Keywords/Areas",
+          "KPI Target",
+          "Timeline",
+          "Effort", // Added
+          "Impact", // Added
+        ],
+        rows: [
+          {
+            action: "[e.g., Fix technical issues]",
+            priority: "High",
+            target: "[e.g., Crawlability]",
+            kpi: "[e.g., Index Rate >95% Est.]",
+            timeline: "0-3 mo",
+            effort: "[Low/Medium/High]", // Added
+            impact: "[Low/Medium/High]", // Added
+          },
+          {
+            action: "[e.g., Create UK landing page]",
+            priority: "Medium",
+            target: "[Topic]",
+            kpi: "[e.g., Rank Top 5 UK Est.]",
+            timeline: "3-6 mo",
+            effort: "[Low/Medium/High]", // Added
+            impact: "[Low/Medium/High]", // Added
+          },
+          {
+            action: "[e.g., Build 5 .uk backlinks]",
+            priority: "Medium",
+            target: "[Target pages]",
+            kpi: "[e.g., DA Increase Est.]",
+            timeline: "3-6 mo",
+            effort: "[Low/Medium/High]", // Added
+            impact: "[Low/Medium/High]", // Added
+          },
+        ],
+      },
+      socialMedia: {
+        title: "Social Media - Next 6 Months (UK Focus)",
+        headers: [
+          "Platform",
+          "Content Focus (UK Angle)",
+          "Frequency",
+          "Key Metric",
+          "Target",
+          "Effort", // Added
+          "Impact", // Added
+        ],
+        rows: [
+          {
+            platform: "[e.g., LinkedIn]",
+            contentFocus: "[e.g., UK Case Studies Est.]",
+            frequency: "[e.g., 2/week Est.]",
+            metric: "[e.g., Engagement Rate Est.]",
+            target: "[e.g., >3% Est.]",
+            effort: "[Low/Medium/High]", // Added
+            impact: "[Low/Medium/High]", // Added
+          },
+          {
+            platform: "[e.g., Instagram]",
+            contentFocus: "[e.g., UK Lifestyle Est.]",
+            frequency: "[e.g., 3/week Est.]",
+            metric: "[e.g., Follower Growth Est.]",
+            target: "[e.g., +10% Est.]",
+            effort: "[Low/Medium/High]", // Added
+            impact: "[Low/Medium/High]", // Added
+          },
+        ],
+      },
+      paidMedia: {
+        title: "Paid Media - Next 6 Months (UK Focus)",
+        headers: [
+          "Channel",
+          "Budget Allocation (£ Est.)",
+          "Key UK Campaign Focus",
+          "Target ROAS/CPA (£ Est.)",
+          "Effort", // Added
+          "Impact", // Added
+        ],
+        rows: [
+          {
+            channel: "[e.g., Google Ads UK]",
+            budget: "[% Est.]",
+            focus: "[e.g., UK High-Intent Keywords Est.]",
+            target: "[e.g., 4:1 ROAS Est.]",
+            effort: "[Low/Medium/High]", // Added
+            impact: "[Low/Medium/High]", // Added
+          },
+          {
+            channel: "[e.g., LinkedIn Ads UK]",
+            budget: "[% Est.]",
+            focus: "[e.g., UK Lead Gen Form Est.]",
+            target: "[e.g., <£50 CPA Est.]",
+            effort: "[Low/Medium/High]", // Added
+            impact: "[Low/Medium/High]", // Added
+          },
+        ],
+      },
+    },
+    cSuiteInitiatives: {
+      title: "C-Suite Strategic Initiatives (UK Focus)",
+      roles: [
+        {
+          role: "CEO",
+          focus: "[e.g., Expand UK market share Est.]",
+          actions: ["Detailed Action 1", "Detailed Action 2"],
+          challenges: ["Challenge 1", "Challenge 2"],
+        },
+        {
+          role: "CMO",
+          focus:
+            "[e.g., Enhance brand positioning as a leader in UK [Niche] Est.]",
+          actions: ["Detailed Action 1", "Detailed Action 2"],
+          challenges: ["Challenge 1", "Challenge 2"],
+        },
+        {
+          role: "CTO/CIO",
+          focus: `[e.g., Leverage detected tech: ${detectedTech} for competitive advantage]`,
+          actions: ["Detailed Action 1", "Detailed Action 2"],
+          challenges: ["Challenge 1", "Challenge 2"],
+        },
+        {
+          role: "CFO",
+          focus: "[e.g., Optimise UK pricing model for profitability Est.]",
+          actions: ["Detailed Action 1", "Detailed Action 2"],
+          challenges: ["Challenge 1", "Challenge 2"],
+        },
+        {
+          role: "COO",
+          focus: "[e.g., Streamline UK customer onboarding process Est.]",
+          actions: ["Detailed Action 1", "Detailed Action 2"],
+          challenges: ["Challenge 1", "Challenge 2"],
+        },
+      ],
+    },
+    implementationRoadmap: {
+      title: "Implementation Roadmap Summary (UK Focus)",
+      phases: [
+        {
+          phase: "Phase 1 (0-3 months)",
+          actions: [
+            {
+              action: "UK Action 1",
+              effort: "[Low/Medium/High]",
+              impact: "[Low/Medium/High]",
+            },
+            {
+              action: "UK Action 2",
+              effort: "[Low/Medium/High]",
+              impact: "[Low/Medium/High]",
+            },
+          ],
+        },
+        {
+          phase: "Phase 2 (3-6 months)",
+          actions: [
+            {
+              action: "UK Action 1",
+              effort: "[Low/Medium/High]",
+              impact: "[Low/Medium/High]",
+            },
+            {
+              action: "UK Action 2",
+              effort: "[Low/Medium/High]",
+              impact: "[Low/Medium/High]",
+            },
+          ],
+        },
+        {
+          phase: "Phase 3 (6-12 months)",
+          actions: [
+            {
+              action: "UK Action 1",
+              effort: "[Low/Medium/High]",
+              impact: "[Low/Medium/High]",
+            },
+            {
+              action: "UK Action 2",
+              effort: "[Low/Medium/High]",
+              impact: "[Low/Medium/High]",
+            },
+          ],
+        },
+      ],
+    },
+    roiProjections: {
+      title: "Estimated ROI & Business Impact (12-24 Months)",
+      projections: [
+        {
+          metric: "Metric 1 (e.g., Revenue Increase)",
+          projection: "£[Amount] or [%]",
+          assumptions: "[Brief assumptions]",
+        },
+        {
+          metric: "Metric 2 (e.g., Cost Reduction)",
+          projection: "£[Amount] or [%]",
+          assumptions: "[Brief assumptions]",
+        },
+        {
+          metric: "Metric 3 (e.g., Market Share Growth)",
+          projection: "[%]",
+          assumptions: "[Brief assumptions]",
+        },
+      ],
+    },
+    advantageOpportunities: {
+      title: "Strategic Technology & Data Opportunities (UK Market)",
+      opportunities: [
+        {
+          opportunity:
+            "Opportunity 1 Description (e.g., Leverage specific tech stack difference)",
+          strategicAction:
+            "[CTO/CIO Level Action: e.g., Integrate X data with Y system, Adopt Z technology for efficiency]",
+          competitiveEdge: "[How this provides an edge over competitors]",
+          relevantTech: ["[Relevant Tech 1]", "[Relevant Tech 2]"], // Optional: List relevant tech
+        },
+        {
+          opportunity:
+            "Opportunity 2 Description (e.g., Exploit competitor's tech weakness)",
+          strategicAction: "[CTO/CIO Level Action]",
+          competitiveEdge: "[How this provides an edge]",
+          relevantTech: ["[Relevant Tech 3]"],
+        },
+        {
+          opportunity:
+            "Opportunity 3 Description (e.g., Data integration potential)",
+          strategicAction: "[CTO/CIO Level Action]",
+          competitiveEdge: "[How this provides an edge]",
+          relevantTech: [],
+        },
+      ],
+    },
+  };
 
-Provide strategic recommendations for ${businessName} (${website}) vs ${competitorsString} in the ${industry} **UK market**. Use the following Insites report data and Apollo.io company data for context where relevant:
+  return `**Formatting Instructions:**
+- Respond *only* with a valid JSON object adhering strictly to the structure defined above.
+- **Do not** include any introductory sentences, explanations, apologies, code block markers (\`\`\`), or conversational text outside the JSON structure.
+- **Replace ALL bracketed placeholders** (e.g., \`[description]\`, \`£[Amount]\`, \`[%]\`) within the JSON values with specific, actionable recommendations, insights, and realistic estimations based on the provided analysis context. Focus on **UK market specifics**.
+- **Do not** return the bracket placeholders themselves in the final JSON output. If specific data for a placeholder is unavailable or not applicable, use \`null\` or a descriptive string like "N/A" or "Data unavailable".
+- Use UK English spelling (e.g., analyse, optimisation, behaviour, centre).
+- Base recommendations on the collective insights from all provided analysis sections (SEO, Competitor, Trends, Market, Social, News, Content Ideas, Topic Clusters). Ensure recommendations are **synergistic** and **prioritized**.
+- **For 'cSuiteInitiatives'**:
+    - **Analyze Company Scale:** Before defining roles, evaluate the company's scale using metrics available in the 'Analysis Context' (especially from Apollo data like employee count, estimated revenue, funding).
+    - **Tailor Roles:** Based on the scale:
+        - For large enterprises, the full C-suite (CEO, CMO, CTO, CFO, COO) is likely appropriate.
+        - For SMEs or startups, determine if all roles are necessary. Consider suggesting combined roles (e.g., CEO/Founder covers strategy, Marketing Lead instead of CMO) or omitting roles that aren't justified by the company's current size and complexity.
+        - Only include roles in the final `cSuiteInitiatives.roles` array that are realistically needed *now* or in the near term (next 12 months) based on the company's profile.
+    - **Focus Actions:** Ensure the 'focus' and 'actions' for each included role are strategic and relevant to the UK market and the overall analysis.
+- **For 'advantageOpportunities'**: Focus specifically on strategic opportunities from a **CTO/CIO perspective**, drawing from competitor tech stack differences, data gaps/opportunities, or potential new tech adoption relevant to the UK market. Actions should be strategic (e.g., system integration, tech adoption, data strategy). Mention relevant technologies where applicable.
 
-Insites Report Data for ${businessName}:
+
+**Analysis Context:**
+
+Here is the comprehensive analysis data for ${businessName} (${website}) in the ${industry} industry (UK Market Focus):
+
+${fullAnalysisContext}
+
+**Required JSON Output Structure:**
 \`\`\`json
-${insitesReportJson}
+${JSON.stringify(jsonStructure, null, 2)}
 \`\`\`
 
-Apollo.io Company Data for ${businessName}:
-\`\`\`json
-${apolloDataJson}
-\`\`\`
-
-Apollo.io Company Data for Competitors (${competitorsString}):
-\`\`\`json
-${competitorsApolloDataJson}
-\`\`\`
-
-    Format in Markdown with H2/H3 headings and tables/lists as specified below. Structure the response to match the Tabs/Accordion layout used in the frontend component. Focus on SMART recommendations relevant to the UK.
-
-## Executive Summary (UK Focus)
-- **Top 3 Strategic Priorities (UK):** 1. [Priority 1 Est.] 2. [Priority 2 Est.] 3. [Priority 3 Est.] (Consider overall findings, Apollo funding stage: ${
-    apolloData?.latest_funding_stage
-  })
-- **Expected Key Outcomes (12 months, UK):** [List 2-3 measurable outcomes Est., e.g., Increase UK market share by X%, Improve UK LTV:CAC to Y:1, Increase revenue by Z% (consider Apollo revenue: ${
-    apolloData?.annual_revenue_printed
-  })]
-- **Overall Implementation Timeline:** [e.g., 6-12 months Est.]
-
-## Digital Marketing Strategy Roadmap (UK Focus)
-### Organic Search (SEO) - Next 6 Months (UK)
-Use a Markdown table based on Insites SEO/Keyword data and Apollo keywords: | Action                     | Priority | Target UK Keywords/Areas | KPI Target        | Timeline | |----------------------------|----------|--------------------------|-------------------|----------| | [e.g., Fix technical issues]| High     | [e.g., Crawlability]     | [e.g., Index Rate >95% Est.] | 0-3 mo   | | [e.g., Create UK landing page] | Medium   | [Topic from Insites gaps/Apollo keywords: ${apolloData?.keywords
-    ?.slice(0, 3)
-    .join(
-      ", "
-    )}] | [e.g., Rank Top 5 UK Est.] | 3-6 mo   | | [e.g., Build 5 .uk backlinks]  | Medium   | [Target pages]           | [e.g., DA Increase Est.] | 3-6 mo   |
-### Social Media - Next 6 Months (UK Focus)
-Use a Markdown table based on Insites social data and Apollo social URLs: | Platform   | Content Focus (UK Angle) | Frequency | Key Metric | Target | |------------|--------------------------|-----------|------------|--------| | [e.g., LinkedIn, check Apollo: ${
-    apolloData?.linkedin_url
-  }] | [e.g., UK Case Studies Est.] | [e.g., 2/week Est.] | [e.g., Engagement Rate Est.] | [e.g., >3% Est.] | | [e.g., Instagram]| [e.g., UK Lifestyle Est.]  | [e.g., 3/week Est.] | [e.g., Follower Growth Est.] | [e.g., +10% Est.] |
-### Paid Media - Next 6 Months (UK Focus)
-Use a Markdown table based on Insites paid_search data: | Channel     | Budget Allocation (£ Est.) | Key UK Campaign Focus | Target ROAS/CPA (£ Est.) | |-------------|--------------------------|-----------------------|--------------------------| | [e.g., Google Ads UK] | [% Est.] | [e.g., UK High-Intent Keywords Est.] | [e.g., 4:1 ROAS Est.] | | [e.g., LinkedIn Ads UK]| [% Est.] | [e.g., UK Lead Gen Form Est.] | [e.g., <£50 CPA Est.] |
-
-## C-Suite Strategic Initiatives (UK Focus)
-Provide **in-depth**, actionable recommendations for each C-Suite role, going beyond single sentences. Include potential challenges or considerations. Use the exact format below including bullet points for actions and challenges. Consider competitor data from Apollo where relevant.
-### CEO
-- **Strategic Focus:** [e.g., Expand UK market share Est. based on Apollo revenue/funding: ${
-    apolloData?.annual_revenue_printed
-  }, ${apolloData?.total_funding_printed}]
-- **Key Action(s):**
-    - [Detailed Action 1, e.g., Identify and negotiate with 2 potential UK distribution partners by end of Q2.]
-    - [Detailed Action 2, e.g., Evaluate feasibility of a small UK-based acquisition target by end of Q3.]
-- **Potential Challenges:** [e.g., Market saturation, finding suitable partners.]
-### CMO
-- **Strategic Focus:** [e.g., Enhance brand positioning as a leader in UK [Niche] Est.]
-- **Key Action(s):**
-    - [Detailed Action 1, e.g., Develop and launch a UK-centric content marketing campaign focusing on [Key Theme from Apollo keywords/desc: ${
-      apolloData?.keywords?.[0]
-    }, ${apolloData?.description?.substring(
-    0,
-    50
-  )}...] by Q4, measuring reach and engagement.]
-    - [Detailed Action 2, e.g., Secure speaking opportunities at 2 major UK industry events in the next 12 months.]
-- **Potential Challenges:** [e.g., Cutting through competitor noise, measuring brand perception shift.]
-### CTO/CIO
-- **Strategic Focus:** [e.g., Leverage detected tech: ${detectedTech} for competitive advantage]
-- **Key Action(s):**
-    - [Detailed Action 1, e.g., Pilot integration of [Detected Tech Feature] into the UK customer onboarding flow by Q3, aiming for X% efficiency gain.]
-    - [Detailed Action 2, e.g., Research UK-specific compliance requirements for using [Detected Tech].]
-- **Potential Challenges:** [e.g., Integration complexity, data privacy regulations (GDPR).]
-### CFO
-- **Strategic Focus:** [e.g., Optimise UK pricing model for profitability Est. considering Apollo revenue: ${
-    apolloData?.annual_revenue_printed
-  }]
-- **Key Action(s):**
-    - [Detailed Action 1, e.g., Conduct A/B testing of tiered £ pricing vs. project-based pricing for UK clients in Q4.]
-    - [Detailed Action 2, e.g., Analyse competitor pricing and value proposition quarterly (use competitor Apollo data if available).]
-- **Potential Challenges:** [e.g., Customer reaction to price changes, accurately modelling LTV.]
-### COO
-- **Strategic Focus:** [e.g., Streamline UK customer onboarding process Est. considering Apollo employee count: ${
-    apolloData?.estimated_num_employees
-  }]
-- **Key Action(s):**
-    - [Detailed Action 1, e.g., Map current UK onboarding journey and identify bottlenecks by end of Q2.]
-    - [Detailed Action 2, e.g., Implement CRM automation to reduce manual touchpoints by 30% by Q3.]
-- **Potential Challenges:** [e.g., Change management, ensuring positive customer experience during transition.]
-
-
-## Implementation Roadmap Summary (UK Focus)
-Use Markdown lists under H3 headings for each phase:
-### Phase 1 (0-3 months)
-- [UK Action 1 Est.]
-- [UK Action 2 Est.]
-- [UK Action 3 Est.]
-### Phase 2 (3-6 months)
-- [UK Action 1 Est.]
-- [UK Action 2 Est.]
-- [UK Action 3 Est.]
-### Phase 3 (6-12 months)
-- [UK Action 1 Est.]
-- [UK Action 2 Est.]
-- [UK Action 3 Est.]
-
-## ROI Projections (Estimated - UK Market)
-Use a Markdown table:
-| Initiative                 | Estimated Cost (£) | Estimated Return (12 mo, £) | Estimated ROI | Confidence |
-|----------------------------|--------------------|-----------------------------|---------------|------------|
-| [e.g., UK SEO Overhaul]    | [£X Est.]          | [£Y Est.]                   | [% Est.]      | [High/Med/Low] |
-| [e.g., UK Paid Social]   | [£A Est.]          | [£B Est.]                   | [% Est.]      | [High/Med/Low] |
-
-All recommendations should be SMART (specific, measurable, achievable, relevant, time-bound) and tailored for the UK market. Use estimated but realistic numbers for targets and projections. Leverage insights from the provided Insites and Apollo JSON data where possible.`;
+Generate the strategic recommendations JSON object based *only* on the provided analysis context.`;
 };

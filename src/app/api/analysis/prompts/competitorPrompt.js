@@ -23,9 +23,175 @@ export const getCompetitorPrompt = (
     2
   );
 
-  return `IMPORTANT: Respond *only* with the requested Markdown content below. Do not include any introductory sentences, explanations, or conversational text. Replace ALL bracketed placeholders (like [#], [%], £[amount], [keyword], [description], etc.) with realistic, estimated numerical values or specific textual information based on the context provided. DO NOT return the bracket placeholders themselves. Focus analysis on the **United Kingdom (UK)** market. Use UK English spelling (e.g., analyse, optimisation, behaviour, centre). Use concise bullet points for descriptions where possible.
+  // Define the desired JSON structure
+  const jsonStructure = {
+    competitorOverview: {
+      title: "Competitor Overview (UK Focus)",
+      headers: [
+        "Competitor",
+        "Website Authority (DA Est.)",
+        "Market Share (UK Est.)",
+        "Key Strengths (UK)",
+        "Key Weaknesses (UK)",
+        "Primary USP (UK)",
+        "Target Audience Segment (UK)",
+      ],
+      rows: [
+        // Row for the main business
+        {
+          competitor: businessName,
+          authority: "[1-100]",
+          marketShare: "[%]",
+          strengths: ["Point 1", "Point 2"],
+          weaknesses: ["Point 1", "Point 2"],
+          usp: "[USP]",
+          audience: "[Description]",
+        },
+        // Rows for competitors (map over competitors array)
+        ...competitors.map((comp) => ({
+          competitor: comp,
+          authority: "[1-100]",
+          marketShare: "[%]",
+          strengths: ["Point 1", "Point 2"],
+          weaknesses: ["Point 1", "Point 2"],
+          usp: "[USP]",
+          audience: "[Description]",
+        })),
+      ],
+    },
+    digitalPresence: {
+      title: "Digital Presence Comparison (UK Focus)",
+      headers: [
+        "Competitor",
+        "Est. Monthly Traffic (UK)",
+        "Top Social Platform (UK Est.)",
+        "Social Following (UK Est.)",
+        "Review Rating (UK Avg Est.)",
+        "Content Strategy Focus (Est.)",
+      ],
+      rows: [
+        {
+          competitor: businessName,
+          traffic: `[${avgMonthlyTraffic}]`,
+          topPlatform: "[Platform]",
+          following: `[${facebookFollows}]`,
+          rating: `[${avgReview}]`,
+          contentFocus: "[Focus]",
+        },
+        ...competitors.map((comp) => ({
+          competitor: comp,
+          traffic: "[#]",
+          topPlatform: "[Platform]",
+          following: "[#]",
+          rating: "[1-5]",
+          contentFocus: "[Focus]",
+        })),
+      ],
+      notes: "Metrics are estimations, some sourced from Insites.",
+    },
+    pricingStrategy: {
+      title: "Pricing Strategy Analysis (UK Market)",
+      headers: [
+        "Competitor",
+        "Pricing Model (Est.)",
+        "Key Price Point (£ Est.)",
+        "Positioning (Est.)",
+        "Discounts Offered (Est.)",
+        "Value Proposition (UK Focus)",
+      ],
+      rows: [
+        {
+          competitor: businessName,
+          model: "[Model]",
+          pricePoint: "[£X]",
+          positioning: "[Position]",
+          discounts: "[Y/N/S]",
+          valueProp: ["Point 1", "Point 2"],
+        },
+        ...competitors.map((comp) => ({
+          competitor: comp,
+          model: "[Model]",
+          pricePoint: "[£X]",
+          positioning: "[Position]",
+          discounts: "[Y/N/S]",
+          valueProp: ["Point 1", "Point 2"],
+        })),
+      ],
+      summary:
+        "Price point comparison summary (UK): [Your business is X% higher/lower on average in £ (Est.)]",
+    },
+    marketingChannels: {
+      title: "Marketing Channel Effectiveness (UK Estimated)",
+      headers: [
+        "Competitor",
+        "Top Channel 1 (UK Est.)",
+        "Top Channel 2 (UK Est.)",
+        "Top Channel 3 (UK Est.)",
+        "Weakest Channel (UK Est.)",
+        "Key Message Angle (UK Est.)",
+      ],
+      rows: [
+        {
+          competitor: businessName,
+          top1: "[Channel: %]",
+          top2: "[Channel: %]",
+          top3: "[Channel: %]",
+          weakest: "[Channel]",
+          angle: "[Angle]",
+        },
+        ...competitors.map((comp) => ({
+          competitor: comp,
+          top1: "[Channel: %]",
+          top2: "[Channel: %]",
+          top3: "[Channel: %]",
+          weakest: "[Channel]",
+          angle: "[Angle]",
+        })),
+      ],
+      gapOpportunities: {
+        title: "Channel Gap Opportunities (UK)",
+        opportunities: [
+          { channel: "Channel 1", rationale: "[Rationale/action]" },
+          { channel: "Channel 2", rationale: "[Rationale/action]" },
+        ],
+      },
+    },
+    apolloComparison: {
+      title: "Apollo Data Comparison (UK Focus)",
+      competitorData: competitors.map((comp) => ({
+        name: comp,
+        confirmations: ["Point 1", "Point 2"],
+        discrepancies: ["Point 1", "Point 2"],
+        insights: ["Point 1", "Point 2"],
+      })),
+    },
+    keyDifferences: {
+      title: "Business vs. Competitors: Key Differences (UK Focus)",
+      digitalPresence: "[Summary of differences]",
+      pricing: "[Summary of differences]",
+      marketingChannels: "[Summary of differences]",
+      overall: "[Overall summary sentence]",
+    },
+    swotAnalysis: {
+      title: `SWOT Analysis for ${businessName} (UK Context)`,
+      strengths: ["Point 1", "Point 2", "Point 3"],
+      weaknesses: ["Point 1", "Point 2"],
+      opportunities: ["Point 1", "Point 2"],
+      threats: ["Point 1", "Point 2"],
+    },
+  };
 
-Create an extensive, data-focused competitor analysis for ${businessName} (${website}) vs its key competitors (${competitorsString}) in the ${industry} industry, focusing on the **UK market**. Use the following Insites report data and Apollo.io company data for context where relevant:
+  return `**Formatting Instructions:**
+- Respond *only* with a valid JSON object adhering strictly to the structure defined below.
+- **Do not** include any introductory sentences, explanations, apologies, code block markers (\`\`\`), or conversational text outside the JSON structure.
+- **Replace ALL bracketed placeholders** (e.g., \`[#]\`, \`[%]\`, \`[keyword]\`, \`[description]\`, \`£[amount]\`) within the JSON values with realistic, estimated numerical values or specific textual information derived from the provided context (Insites/Apollo data) or reasonable industry estimations if context is missing.
+- **Do not** return the bracket placeholders themselves in the final JSON output. If specific data for a placeholder is unavailable, use \`null\` or a descriptive string like "Data unavailable".
+- Ensure all analysis, data, and estimations focus specifically on the **United Kingdom (UK)** market.
+- Use UK English spelling (e.g., analyse, optimisation, behaviour, centre).
+
+**Analysis Request:**
+
+Create an extensive, data-focused competitor analysis JSON object for ${businessName} (${website}) vs its key competitors (${competitorsString}) in the ${industry} industry, focusing on the **UK market**. Use the following Insites report data and Apollo.io company data (for both the primary business and competitors) for context where relevant:
 
 Insites Report Data for ${businessName}:
 \`\`\`json
@@ -42,118 +208,10 @@ Apollo.io Company Data for Competitors (${competitorsString}):
 ${competitorsApolloDataJson}
 \`\`\`
 
-    Format in Markdown with H2/H3 headings and tables/lists as specified.
+**Required JSON Output Structure:**
+\`\`\`json
+${JSON.stringify(jsonStructure, null, 2)}
+\`\`\`
 
-## Competitor Overview (UK Focus)
-Use a Markdown table. Include ${businessName} and each competitor from ${competitorsString}. Use the Apollo data provided for competitors where available.
-| Competitor      | Website Authority (DA Est.) | Market Share (UK Est.) | Key Strengths (UK) | Key Weaknesses (UK) | Primary USP (UK) | Target Audience Segment (UK) |
-|-----------------|-----------------------------|------------------------|--------------------|-------------------|------------------|------------------------------|
-| ${businessName} | [Estimate 1-100, consider Apollo alexa_ranking: ${
-    apolloData?.alexa_ranking
-  }] | [% Estimate]           | [Bullet points, consider Apollo desc: ${
-    apolloData?.description
-  }] | [Bullet points]   | [USP]            | [Description, consider Apollo industry: ${
-    apolloData?.industry
-  }] |
-${competitors
-  .map(
-    (
-      comp,
-      index // Add index to access corresponding competitor Apollo data
-    ) =>
-      `| ${comp} | [Estimate 1-100, consider Apollo alexa_ranking: ${competitorsApolloData?.[index]?.alexa_ranking}] | [% Estimate]           | [Bullet points, consider Apollo desc: ${competitorsApolloData?.[index]?.description}] | [Bullet points]   | [USP]            | [Description, consider Apollo industry: ${competitorsApolloData?.[index]?.industry}] |`
-  )
-  .join("\n")}
-
-## Digital Presence Comparison (UK Focus)
-Use a Markdown table. Include ${businessName} and each competitor from ${competitorsString}. Use Apollo data for competitors where available.
-| Competitor      | Est. Monthly Traffic (UK) | Top Social Platform (UK Est.) | Social Following (UK Est.) | Review Rating (UK Avg Est.) | Content Strategy Focus (Est.) |
-|-----------------|---------------------------|-------------------------------|----------------------------|-----------------------------|-------------------------------|
-| ${businessName} | [${avgMonthlyTraffic}] | [Platform Name, consider Apollo social URLs] | [${facebookFollows}, consider Apollo social URLs] | [${avgReview}] | [e.g., Blog, Case Studies]    |
-${competitors
-  .map(
-    (
-      comp,
-      index // Add index
-    ) =>
-      `| ${comp} | [# Estimate]              | [Platform Name, consider Apollo social URLs: ${competitorsApolloData?.[index]?.linkedin_url}, ${competitorsApolloData?.[index]?.facebook_url}] | [# Estimate, consider Apollo social URLs] | [1-5 Est.]                  | [e.g., Blog, Webinars]        |`
-  )
-  .join("\n")}
-*(Metrics are estimations, some sourced from Insites.)*
-
-## Pricing Strategy Analysis (UK Market)
-Use a Markdown table. Include ${businessName} and each competitor from ${competitorsString}.
-| Competitor      | Pricing Model (Est.) | Key Price Point (£ Est.) | Positioning (Est.) | Discounts Offered (Est.) | Value Proposition (UK Focus) |
-|-----------------|----------------------|--------------------------|--------------------|--------------------------|------------------------------|
-| ${businessName} | [e.g., Subscription] | [£X/mo or £Y/project]    | [e.g., Mid-Market] | [Yes/No/Seasonal]        | [Key value points]           |
-${competitors
-  .map(
-    (comp) =>
-      `| ${comp} | [e.g., Tiered]       | [£X/mo or £Y/project]    | [e.g., Premium]    | [Yes/No/Seasonal]        | [Key value points]           |`
-  )
-  .join("\n")}
-- Price point comparison summary (UK): [Your business is X% higher/lower on average in £ (Est.)]
-
-## Marketing Channel Effectiveness (UK Estimated)
-Use a Markdown table. Include ${businessName} and each competitor from ${competitorsString}.
-| Competitor      | Top Channel 1 (UK Est.) | Top Channel 2 (UK Est.) | Top Channel 3 (UK Est.) | Weakest Channel (UK Est.) | Key Message Angle (UK Est.) |
-|-----------------|-------------------------|-------------------------|-------------------------|---------------------------|-----------------------------|
-| ${businessName} | [Channel: % Est.]       | [Channel: % Est.]       | [Channel: % Est.]       | [Channel]                 | [Angle]                     |
-${competitors
-  .map(
-    (comp) =>
-      `| ${comp} | [Channel: % Est.]       | [Channel: % Est.]       | [Channel: % Est.]       | [Channel]                 | [Angle]                     |`
-  )
-  .join("\n")}
-
-### Channel Gap Opportunities (UK)
-- **Channel 1:** [Identify a channel where competitors are weak/absent but relevant to your audience. Rationale/action.]
-- **Channel 2:** [Identify another channel. Rationale/action.]
-
-## Apollo Data Comparison (UK Focus)
-For each competitor in (${competitorsString}), compare the data provided in the 'Apollo.io Company Data for Competitors' JSON block above with your own estimations or data derived from the Insites report (e.g., estimated traffic, social presence, industry, keywords). Use bullet points to highlight:
-- **Key Confirmations:** Where Apollo data confirms or aligns with your other findings.
-- **Key Discrepancies:** Where Apollo data significantly differs from your other findings (e.g., employee count, industry, keywords).
-- **New Insights:** Any valuable information learned *only* from the Apollo data for that competitor.
-Example:
-- **[Competitor Name 1]:**
-    - Confirmation: Apollo industry classification matches Insites.
-    - Discrepancy: Apollo estimated employees (**[#]**) differs significantly from previous estimates.
-    - Insight: Apollo lists keywords ([keywords]) not previously considered.
-- **[Competitor Name 2]:**
-    - ...
-
-## Business vs. Competitors: Key Differences (UK Focus)
-**This section is mandatory.** Directly compare ${businessName} against the listed competitors (${competitorsString}) based on the data presented in the tables above (Digital Presence, Pricing, Marketing Channels) AND the Apollo comparison. Use concise bullet points highlighting key differences where ${businessName} leads or lags behind.
-- **Digital Presence:** [e.g., ${businessName} has higher estimated traffic but lower social following compared to [Competitor Name]. Use Apollo data for comparison.]
-- **Pricing:** [e.g., ${businessName}'s pricing is positioned as [Mid-Market/Premium/etc.] while [Competitor Name] is [Positioning].]
-- **Marketing Channels:** [e.g., ${businessName} relies more on [Channel] while competitors focus on [Channel].]
-- **Overall:** [Provide a 1-2 sentence summary of the main competitive differences.]
-
-## SWOT Analysis for ${businessName} (UK Context)
-### Strengths
-- [Bullet point relevant to UK, consider Insites data & competitor comparison, Apollo data like founded_year: ${
-    apolloData?.founded_year
-  }]
-- [e.g., Stronger presence on LinkedIn (check Apollo: ${
-    apolloData?.linkedin_url
-  })]
-- [e.g., More competitive pricing on core service]
-- [Bullet point relevant to UK]
-### Weaknesses
-- [Bullet point relevant to UK, consider Insites data & competitor comparison]
-- [Bullet point relevant to UK]
-### Opportunities
-- [Bullet point relevant to UK market trends & competitor weaknesses (use competitor Apollo data)]
-- [Bullet point relevant to UK]
-### Threats
-- [Bullet point relevant to UK market trends & competitor strengths (use competitor Apollo data)]
-- [Bullet point relevant to UK]
-
-## Competitive Advantage Opportunities (UK Market)
-- **Opportunity 1:** [Specific action for UK market + expected outcome]
-- **Opportunity 2:** [Specific action for UK market + expected outcome]
-- **Opportunity 3:** [Specific action for UK market + expected outcome]
-
-Include specific estimated numbers where possible, focusing on the UK. Focus on actionable insights for ${businessName}. State clearly if data is estimated.`;
+Fill in the values in the structure above with your analysis and estimations based on the provided data and UK market context. Ensure the final output is a single, valid JSON object.`;
 };

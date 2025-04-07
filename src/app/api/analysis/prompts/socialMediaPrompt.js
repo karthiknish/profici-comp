@@ -10,9 +10,126 @@ export const getSocialMediaPrompt = (
   const insitesReportJson = JSON.stringify(insitesReport || {}, null, 2); // Stringify the passed object
   const apolloDataJson = JSON.stringify(apolloData || {}, null, 2); // Stringify apolloData
 
-  return `IMPORTANT: Respond *only* with the requested Markdown content below. Do not include any introductory sentences, explanations, or conversational text. Replace ALL bracketed placeholders (like [#], [%], £[amount], [keyword], [description], etc.) with realistic, estimated numerical values or specific textual information based on the context provided. DO NOT return the bracket placeholders themselves. Focus analysis on the **United Kingdom (UK)** market. Use UK English spelling (e.g., analyse, optimisation, behaviour, centre).
+  // Define the desired JSON structure
+  const jsonStructure = {
+    keyTakeaways: {
+      title: "Key Takeaways (Social Media)",
+      points: [
+        "Finding 1 (e.g., Strong presence on LinkedIn, weak on Instagram)",
+        "Finding 2 (e.g., Competitor X has high engagement)",
+        "Finding 3 (e.g., Opportunity on Platform Y)",
+      ],
+    },
+    platformPresence: {
+      title: "Platform Presence & Estimated Engagement (UK Focus)",
+      headers: [
+        "Platform",
+        "Your Presence (Est.)",
+        "Competitor Avg (Est.)",
+        "Your Engagement Rate (Est. %)",
+        "Competitor Avg Rate (Est. %)",
+        "Key Content Types",
+        "Notes / Recommendations",
+      ],
+      rows: [
+        {
+          platform: "LinkedIn",
+          presence: "[Followers/Activity]",
+          compAvg: "[Followers/Activity]",
+          engRate: "[%]",
+          compEngRate: "[%]",
+          contentTypes: ["Articles", "Updates"],
+          notes: "[e.g., Focus on B2B]",
+        },
+        {
+          platform: "Instagram",
+          presence: "[Followers/Activity]",
+          compAvg: "[Followers/Activity]",
+          engRate: "[%]",
+          compEngRate: "[%]",
+          contentTypes: ["Reels", "Stories"],
+          notes: "[e.g., Visual content needed]",
+        },
+        {
+          platform: "Facebook",
+          presence: "[Followers/Activity]",
+          compAvg: "[Followers/Activity]",
+          engRate: "[%]",
+          compEngRate: "[%]",
+          contentTypes: ["Events", "Groups"],
+          notes: "[e.g., Low priority?]",
+        },
+        {
+          platform: "Twitter/X",
+          presence: "[Followers/Activity]",
+          compAvg: "[Followers/Activity]",
+          engRate: "[%]",
+          compEngRate: "[%]",
+          contentTypes: ["Updates", "Q&A"],
+          notes: "[e.g., Monitor mentions]",
+        },
+        {
+          platform: "TikTok",
+          presence: "[Followers/Activity]",
+          compAvg: "[Followers/Activity]",
+          engRate: "[%]",
+          compEngRate: "[%]",
+          contentTypes: ["Short videos"],
+          notes: "[e.g., Emerging opportunity?]",
+        },
+        {
+          platform: "YouTube",
+          presence: "[Subscribers/Activity]",
+          compAvg: "[Subscribers/Activity]",
+          engRate: "[%]",
+          compEngRate: "[%]",
+          contentTypes: ["Tutorials", "Vlogs"],
+          notes: "[e.g., High effort]",
+        },
+      ],
+      notes:
+        'Use "N/A" or "Low" if presence is negligible. Engagement Rate = (Likes+Comments+Shares)/Followers per post avg. estimations.',
+    },
+    sentimentAnalysis: {
+      title: "Audience Sentiment Analysis (UK Focus)",
+      overallBrandSentiment: {
+        sentiment: "[Positive/Negative/Neutral/Mixed]",
+        justification: "[Brief justification/evidence]",
+      },
+      keyThemes: ["Theme 1", "Theme 2", "Theme 3"],
+      competitorSnippets: [
+        { competitor: "[Competitor A]", summary: "[Brief sentiment summary]" },
+        { competitor: "[Competitor B]", summary: "[Brief sentiment summary]" },
+      ],
+    },
+    platformRecommendations: {
+      title: "Platform Recommendations (UK Focus)",
+      topPlatforms: [
+        { platform: "[Name, e.g., LinkedIn]", rationale: "[Rationale]" },
+        { platform: "[Name, e.g., YouTube]", rationale: "[Rationale]" },
+      ],
+      keyActions: [
+        // Group actions by platform
+        { platform: "[Platform 1 Name]", actions: ["Action 1", "Action 2"] },
+        { platform: "[Platform 2 Name]", actions: ["Action 1", "Action 2"] },
+        { platform: "General/Other", actions: ["Action if applicable"] },
+      ],
+      notes:
+        "Follower counts, engagement rates, and sentiment are estimations based on public perception and industry knowledge.",
+    },
+  };
 
-Provide an estimated social media presence analysis for ${businessName} (${website}) compared to competitors (${competitorsString}) in the ${industry} UK market. Use the following Insites report data and Apollo.io company data for context where relevant:
+  return `**Formatting Instructions:**
+- Respond *only* with a valid JSON object adhering strictly to the structure defined below.
+- **Do not** include any introductory sentences, explanations, apologies, code block markers (\`\`\`), or conversational text outside the JSON structure.
+- **Replace ALL bracketed placeholders** (e.g., \`[#]\`, \`[%]\`, \`[keyword]\`, \`[description]\`, \`£[amount]\`) within the JSON values with realistic, estimated numerical values or specific textual information derived from the provided context (Insites/Apollo data) or reasonable industry estimations if context is missing.
+- **Do not** return the bracket placeholders themselves in the final JSON output. If specific data for a placeholder is unavailable, use \`null\` or a descriptive string like "Data unavailable". Use arrays for bullet points/list items/table rows as shown.
+- Ensure all analysis, data, and estimations focus specifically on the **United Kingdom (UK)** market.
+- Use UK English spelling (e.g., analyse, optimisation, behaviour, centre).
+
+**Analysis Request:**
+
+Provide an estimated social media presence analysis JSON object for ${businessName} (${website}) compared to competitors (${competitorsString}) in the ${industry} UK market. Use the following Insites report data and Apollo.io company data for context where relevant:
 
 Insites Report Data:
 \`\`\`json
@@ -24,52 +141,10 @@ Apollo.io Company Data:
 ${apolloDataJson}
 \`\`\`
 
-Format in Markdown with H2 headings and tables/bullet points.
+**Required JSON Output Structure:**
+\`\`\`json
+${JSON.stringify(jsonStructure, null, 2)}
+\`\`\`
 
-## Key Takeaways (Social Media)
-- [Brief bullet point 1 summarizing a key finding, e.g., Strong presence on LinkedIn, weak on Instagram (consider Apollo URLs: ${apolloData?.linkedin_url}, ${apolloData?.facebook_url}, ${apolloData?.twitter_url})]
-- [Brief bullet point 2 summarizing a key finding, e.g., Competitor X has high engagement]
-- [Brief bullet point 3 summarizing a key finding, e.g., Opportunity on Platform Y]
-
-## Platform Presence & Estimated Engagement (UK Focus)
-Use a Markdown table:
-| Platform    | Your Presence (Est.) | Competitor Avg (Est.) | Your Engagement Rate (Est. %) | Competitor Avg Rate (Est. %) | Key Content Types | Notes / Recommendations |
-|-------------|----------------------|-------------------------|-------------------------------|------------------------------|-------------------|-------------------------|
-| LinkedIn    | [Followers/Activity, check Apollo: ${apolloData?.linkedin_url}] | [Followers/Activity]    | [%]                           | [%]                          | [e.g., Articles, Updates] | [e.g., Focus on B2B] |
-| Instagram   | [Followers/Activity] | [Followers/Activity]    | [%]                           | [%]                          | [e.g., Reels, Stories]  | [e.g., Visual content needed] |
-| Facebook    | [Followers/Activity, check Apollo: ${apolloData?.facebook_url}] | [Followers/Activity]    | [%]                           | [%]                          | [e.g., Events, Groups]  | [e.g., Low priority?] |
-| Twitter/X   | [Followers/Activity, check Apollo: ${apolloData?.twitter_url}] | [Followers/Activity]    | [%]                           | [%]                          | [e.g., Updates, Q&A]    | [e.g., Monitor mentions] |
-| TikTok      | [Followers/Activity] | [Followers/Activity]    | [%]                           | [%]                          | [e.g., Short videos]    | [e.g., Emerging opportunity?] |
-| YouTube     | [Subscribers/Activity] | [Subscribers/Activity]| [%]                           | [%]                          | [e.g., Tutorials, Vlogs]| [e.g., High effort] |
-*(Use "N/A" or "Low" if presence is negligible. Engagement Rate = (Likes+Comments+Shares)/Followers per post avg.)*
-
-## Audience Sentiment Analysis (UK Focus)
-### Overall Brand Sentiment (Est.)
-- [Positive/Negative/Neutral/Mixed] - [Brief justification/evidence]
-### Key Discussion Themes (Est.)
-- [Theme 1]
-- [Theme 2]
-- [Theme 3]
-### Competitor Sentiment Snippets (Est.)
-- [Competitor A: Brief sentiment summary]
-- [Competitor B: Brief sentiment summary]
-
-## Platform Recommendations (UK Focus)
-### Top Recommended Platforms
-- **Platform 1:** [Name, e.g., LinkedIn]
-- **Platform 2:** [Name, e.g., YouTube]
-### Rationale
-- **[Platform 1 Name]:** [Concise bullet point rationale]
-- **[Platform 2 Name]:** [Concise bullet point rationale]
-### Key Actions (Next 3 Months)
-- **[Platform 1 Name]:**
-    - [Action 1]
-    - [Action 2]
-- **[Platform 2 Name]:**
-    - [Action 1]
-    - [Action 2]
-- **General/Other Platforms:**
-    - [Action for Facebook/Twitter/etc. if applicable]
-
-State clearly that follower counts, engagement rates, and sentiment are estimations based on public perception and industry knowledge. Use the specified subheadings (###).`;
+Fill in the values in the structure above with your analysis and estimations based on the provided data and UK market context. Ensure the final output is a single, valid JSON object.`;
 };

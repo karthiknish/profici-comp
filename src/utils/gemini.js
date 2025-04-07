@@ -1,18 +1,34 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
 
+// Revert to single instance and init function
 let geminiApi;
 
 export const initGemini = (apiKey) => {
-  geminiApi = new GoogleGenerativeAI(apiKey);
+  if (!apiKey) {
+    console.warn("Attempted to initialize Gemini without an API key.");
+    return; // Or throw an error if initialization is critical
+  }
+  try {
+    geminiApi = new GoogleGenerativeAI(apiKey);
+    console.log("Gemini API initialized successfully in utils.");
+  } catch (error) {
+    console.error("Failed to initialize Gemini API in utils:", error);
+    geminiApi = null; // Ensure it's null if init fails
+  }
 };
 
 export const generateSeoAnalysis = async (formData) => {
+  // Check if initialized, attempt re-init if not (using single key)
   if (!geminiApi) {
-    throw new Error("Gemini API not initialized. Call initGemini first.");
+    console.warn("Gemini API not initialized. Attempting re-initialization...");
+    initGemini(process.env.GEMINI_API_KEY); // Attempt re-init
+    if (!geminiApi) {
+      throw new Error("Gemini API could not be initialized.");
+    }
   }
 
   const model = geminiApi.getGenerativeModel({
-    model: "gemini-2.5-pro-exp-03-25",
+    model: process.env.GEMINI_MODEL,
   });
 
   // Create prompts for each section of the report

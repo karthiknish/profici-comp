@@ -19,9 +19,13 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Loader2 } from "lucide-react";
-import { format } from "date-fns"; // For formatting dates
-import SystemStatusChecker from "@/components/admin/SystemStatusChecker"; // Import the new component
+import { Loader2, Trash2 } from "lucide-react"; // Added Trash2 icon
+import { format } from "date-fns";
+import SystemStatusChecker from "@/components/admin/SystemStatusChecker";
+import { Button } from "@/components/ui/button"; // Import Button
+import { toast } from "sonner"; // Import toast
+
+// Removed localStorage keys definition
 
 export default function AdminPage() {
   const { data: session, status } = useSession(); // Get session status
@@ -80,7 +84,24 @@ export default function AdminPage() {
       fetchLeads();
       fetchReports();
     }
-  }, [status, router]); // Re-run effect when session status changes
+  }, [status, router]);
+
+  // --- Handler to clear localStorage ---
+  const handleClearLocalStorage = () => {
+    // Since localStorage is client-side only, this button is now redundant
+    // If server-side state needs clearing, a different mechanism is required.
+    toast.info("LocalStorage is no longer used for analysis data.");
+    // try {
+    //   localStorage.removeItem(RESULTS_STORAGE_KEY); // These keys are no longer defined
+    //   localStorage.removeItem(FORMDATA_STORAGE_KEY);
+    //   localStorage.removeItem("businessAnalysisEmail"); // Also clear the email access key
+    //   toast.success("Analysis localStorage cleared successfully!");
+    // } catch (e) {
+    //   console.error("Error clearing localStorage:", e);
+    //   toast.error("Failed to clear localStorage.");
+    // }
+  };
+  // --- End Handler ---
 
   const isLoading = isLoadingLeads || isLoadingReports || status === "loading";
 
@@ -226,6 +247,36 @@ export default function AdminPage() {
           <SystemStatusChecker />
         </TabsContent>
       </Tabs>
+
+      {/* Developer Tools Section */}
+      <div className="mt-8">
+        <Card>
+          <CardHeader>
+            <CardTitle>Developer Tools</CardTitle>
+            <CardDescription>
+              Actions for development and testing.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Button
+              variant="destructive"
+              onClick={handleClearLocalStorage}
+              disabled
+            >
+              {" "}
+              {/* Disable button */}
+              <Trash2 className="mr-2 h-4 w-4" /> Clear Analysis LocalStorage
+              (Disabled)
+            </Button>
+            <p className="text-xs text-muted-foreground mt-2">
+              LocalStorage is no longer used for analysis data persistence.
+              {/* This will remove saved analysis results and form data from your
+              browser, forcing the analysis page to show the form again. It also
+              clears the access email. */}
+            </p>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 }

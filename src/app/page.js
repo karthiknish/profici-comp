@@ -22,9 +22,9 @@ import FeaturesSection from "@/components/landing/FeaturesSection";
 import BenefitsSection from "@/components/landing/BenefitsSection";
 import HowItWorksSection from "@/components/landing/HowItWorksSection";
 import CtaSection from "@/components/landing/CtaSection";
-import ConsultancySection from "@/components/landing/ConsultancySection";
+import ConsultancySection from "@/components/landing/ConsultancySection"; // Re-import ConsultancySection
 import Footer from "@/components/landing/Footer";
-import ToolInsightsSection from "@/components/landing/ToolInsightsSection"; // Import the new section
+import ToolInsightsSection from "@/components/landing/ToolInsightsSection";
 
 // Data definitions (can be moved to a separate file if they grow)
 const features = [
@@ -109,7 +109,6 @@ const howItWorksSteps = [
   },
 ];
 
-
 export default function HomePage() {
   const router = useRouter();
   const [email, setEmail] = useState("");
@@ -123,20 +122,18 @@ export default function HomePage() {
       return;
     }
     setIsLoading(true);
-    try {
-      localStorage.setItem("businessAnalysisEmail", email);
-      console.log("Email saved to localStorage.");
-      toast.success("Email captured!", {
-        description: "Redirecting to analysis tool...",
-      });
-      setTimeout(() => {
-        router.push("/analysis");
-      }, 1000);
-    } catch (storageError) {
-      console.error("Error saving email to localStorage:", storageError);
-      toast.error("Could not save email. Please try again.");
-      setIsLoading(false);
-    }
+    // Removed localStorage saving logic. Email will need to be passed differently if needed on the analysis page.
+    // For now, just show success and redirect.
+    console.log("Email captured:", email); // Log email instead of saving
+    toast.success("Email captured!", {
+      description: "Redirecting to analysis tool...",
+    });
+    setTimeout(() => {
+      // Consider passing email via query params if needed: router.push(`/analysis?email=${encodeURIComponent(email)}`);
+      router.push("/analysis");
+    }, 1000);
+    // No catch block needed for localStorage anymore
+    // setIsLoading(false); // Consider if loading state should be reset differently or handled by redirection
   };
 
   return (
@@ -149,7 +146,7 @@ export default function HomePage() {
           handleGetStarted={handleGetStarted}
           isLoading={isLoading}
         />
-        <ToolInsightsSection /> {/* Add the new section here */}
+        <ToolInsightsSection />
         <FeaturesSection features={features} />
         <BenefitsSection benefits={benefits} />
         <HowItWorksSection steps={howItWorksSteps} />
@@ -159,7 +156,7 @@ export default function HomePage() {
           handleGetStarted={handleGetStarted}
           isLoading={isLoading}
         />
-        <ConsultancySection />
+        <ConsultancySection /> {/* Re-add ConsultancySection component */}
       </main>
       <Footer />
       {/* Toaster should be in the root layout or a shared client component */}

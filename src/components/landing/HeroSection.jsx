@@ -60,7 +60,7 @@ export default function HeroSection({
           className="lg:w-1/2 mb-10 lg:mb-0 lg:pr-10 z-10"
         >
           <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight leading-tight mb-6 text-foreground">
-            Unlock Growth for Your SME with{" "}
+            Unlock Growth for Your UK SME with{" "}
             <span className="text-primary">AI-Powered Insights</span>
           </h1>
           <p className="text-lg md:text-xl mb-8 text-muted-foreground max-w-xl mx-auto lg:mx-0">
@@ -106,7 +106,7 @@ export default function HeroSection({
         >
           <div className="relative w-full max-w-md aspect-square z-10">
             {" "}
-            {/* Kept aspect-square */}
+            {/* Restored aspect-square */}
             <motion.div
               initial={{ opacity: 0, scale: 0.5, rotate: -20 }}
               animate={{ opacity: 1, scale: 1, rotate: 0 }}

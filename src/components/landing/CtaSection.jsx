@@ -38,14 +38,14 @@ export default function CtaSection({
       whileInView="visible"
       viewport={{ once: true, amount: 0.3 }}
       id="cta" // Added ID
-      className="bg-gradient-to-r from-gray-900 via-gray-700 to-gray-900 py-16 lg:py-24" // Dark gray gradient, no vertical margin
+      className="bg-gradient-to-r from-primary via-blue-700 to-primary py-16 lg:py-24" // Restored gradient, removed margin
     >
       <div className="container mx-auto px-6 text-center">
-        {/* Adjusted text color for dark background */}
-        <h2 className="text-3xl md:text-4xl font-bold mb-4 text-white">
+        {/* Restored text color */}
+        <h2 className="text-3xl md:text-4xl font-bold mb-4 text-primary-foreground">
           Ready to Outperform Your Competition?
         </h2>
-        <p className="text-xl text-gray-200 mb-8 max-w-3xl mx-auto">
+        <p className="text-xl text-primary-foreground/80 mb-8 max-w-3xl mx-auto">
           Enter your business email to get your free, comprehensive AI analysis
           instantly.
         </p>
