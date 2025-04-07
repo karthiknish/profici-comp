@@ -289,7 +289,7 @@ export const getRecommendationsPrompt = (
     - **Tailor Roles:** Based on the scale:
         - For large enterprises, the full C-suite (CEO, CMO, CTO, CFO, COO) is likely appropriate.
         - For SMEs or startups, determine if all roles are necessary. Consider suggesting combined roles (e.g., CEO/Founder covers strategy, Marketing Lead instead of CMO) or omitting roles that aren't justified by the company's current size and complexity.
-        - Only include roles in the final `cSuiteInitiatives.roles` array that are realistically needed *now* or in the near term (next 12 months) based on the company's profile.
+        - Only include roles in the final 'cSuiteInitiatives.roles' array that are realistically needed *now* or in the near term (next 12 months) based on the company's profile.
     - **Focus Actions:** Ensure the 'focus' and 'actions' for each included role are strategic and relevant to the UK market and the overall analysis.
 - **For 'advantageOpportunities'**: Focus specifically on strategic opportunities from a **CTO/CIO perspective**, drawing from competitor tech stack differences, data gaps/opportunities, or potential new tech adoption relevant to the UK market. Actions should be strategic (e.g., system integration, tech adoption, data strategy). Mention relevant technologies where applicable.
 
