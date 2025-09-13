@@ -1,35 +1,20 @@
 import React from "react";
 import { renderToBuffer, Font } from "@react-pdf/renderer"; // Import Font
-import path from "path"; // Import path for resolving file path
-// Removed marked import
 import PdfDocument from "@/components/pdf/PdfDocument"; // Import the new document component
 
-// Removed marked configuration
-
-// --- Register Fonts ---
-// Construct the absolute path to the font file
-// process.cwd() gives the root directory where the Node.js process was started
-const fontPath = path.join(
-  process.cwd(),
-  "public",
-  "fonts",
-  "NotoColorEmoji-Regular.ttf"
-);
-
-// Register the font
-// It's important this happens *before* any rendering attempts.
-// Use a specific family name we can reference in styles.
+// --- Emoji support ---
+// PDF does not support color emoji fonts. Use emoji images via a CDN instead.
+// See: https://react-pdf.org/fonts#registeremojisource
 try {
-  Font.register({
-    family: "Noto Color Emoji",
-    src: fontPath,
+  Font.registerEmojiSource({
+    format: "png",
+    url: "https://cdnjs.cloudflare.com/ajax/libs/twemoji/14.0.2/72x72/",
   });
-  console.log("Registered Noto Color Emoji font from:", fontPath);
+  console.log("Registered emoji source (Twemoji CDN) for PDF rendering.");
 } catch (error) {
-  console.error("Error registering Noto Color Emoji font:", error);
-  // PDF generation might still work but icons won't render correctly.
+  console.error("Error registering emoji source:", error);
 }
-// --- End Font Registration ---
+// --- End Emoji support ---
 
 // Function to generate PDF buffer using @react-pdf/renderer
 export async function generatePdfBuffer(analysisResults, submittedData) {

@@ -1,6 +1,10 @@
 import { NextResponse } from "next/server";
+import { rateLimitCheck, getClientIp } from "@/lib/rateLimit";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { connectToDatabase } from "@/lib/mongodb"; // Import the connect function
+import { z } from "zod";
+
+export const runtime = "nodejs";
 
 const geminiApiKey = process.env.GEMINI_API_KEY;
 const MONGODB_DB_NAME = process.env.MONGODB_DB_NAME; // Use the correct env variable name
@@ -46,8 +50,17 @@ You are the Profici Assistant, an AI expert representing Profici Ltd., a premier
 Remember your persona: You are the helpful, knowledgeable Profici Assistant.
 `.trim();
 
+const ChatMessageSchema = z.object({
+  sender: z.enum(["user", "bot"]),
+  text: z.string().min(1).max(5000),
+});
+const BodySchema = z.object({
+  message: z.string().min(1, "Message is required").max(5000),
+  history: z.array(ChatMessageSchema).optional(),
+});
+
 export async function POST(request) {
-  // Check the correct variable name here too
+  // Basic env guard
   if (!geminiApiKey || !MONGODB_DB_NAME) {
     return NextResponse.json(
       { error: "Chatbot API is not configured correctly." },
@@ -55,22 +68,48 @@ export async function POST(request) {
     );
   }
 
-  let db;
-  let mongoClient;
-
   try {
-    const { message, history } = await request.json(); // Expect user message and optional history
-
-    if (!message) {
+    // Rate limit per IP
+    const ip = getClientIp(request.headers);
+    const rl = await rateLimitCheck({
+      key: `chat:${ip}`,
+      windowMs: 60_000,
+      max: 12,
+    }); // 12 req/min
+    if (!rl.ok) {
       return NextResponse.json(
-        { error: "Message is required" },
-        { status: 400 }
+        { error: "Rate limit exceeded. Try again shortly." },
+        {
+          status: 429,
+          headers: { "Retry-After": String(Math.ceil(rl.reset / 1000)) },
+        }
       );
     }
 
+    // Size guard
+    const raw = await request.text();
+    if (raw.length > 100_000) {
+      return NextResponse.json(
+        { error: "Request body too large" },
+        { status: 413 }
+      );
+    }
+    let parsed;
+    try {
+      parsed = raw ? JSON.parse(raw) : {};
+    } catch {
+      return NextResponse.json(
+        { error: "Invalid JSON in request body" },
+        { status: 400 }
+      );
+    }
+    const { message, history } = BodySchema.parse(parsed || {});
+
     // --- Gemini Interaction ---
     const geminiApi = new GoogleGenerativeAI(geminiApiKey);
-    const model = geminiApi.getGenerativeModel({ model: "gemini-1.5-flash" }); // Or your preferred model
+    const model = geminiApi.getGenerativeModel({
+      model: process.env.GEMINI_MODEL || "gemini-1.5-flash",
+    });
 
     // Simple prompt construction (can be made more sophisticated)
     // Combine context, limited history, and the new message
@@ -82,22 +121,27 @@ export async function POST(request) {
       .join("\n");
 
     // Construct the prompt using the refined context
-    const prompt = `${PROFICI_CONTEXT}\n\nConversation History:\n${historyString}\n\nUser: ${message}\nAssistant:`;
+    const promptContent = `${PROFICI_CONTEXT}\n\nConversation History:\n${historyString}\n\nUser: ${message}\nAssistant:`;
 
-    console.log(">>> Sending prompt to Gemini:", prompt);
-    const result = await model.generateContent(prompt);
-    const botResponseText = result.response.text();
-    console.log(">>> Received response from Gemini:", botResponseText);
+    // Redact detailed prompt in logs to avoid leaking history
+    console.log("Chatbot API: promptLen=", promptContent.length);
+    const result = await model.generateContent(promptContent);
+    const botResponseText =
+      (typeof result?.response?.text === "function"
+        ? result.response.text()
+        : "") || "Sorry, I couldn't process that.";
+    console.log("Chatbot API: responseLen=", botResponseText.length);
 
     // --- MongoDB Interaction ---
     try {
       // mongoClient = await clientPromise; // Remove old client promise usage
       // db = mongoClient.db(MONGODB_DB_NAME); // Remove old db assignment
-      const { db } = await connectToDatabase(); // Use the connect function to get db directly
+      const { db } = await connectToDatabase();
       const interactionsCollection = db.collection("chat_interactions");
 
       const interaction = {
         userMessage: message,
+        history: (history || []).slice(-6),
         botResponse: botResponseText,
         timestamp: new Date(),
         // TODO: Add session/user identifier if available
@@ -111,7 +155,9 @@ export async function POST(request) {
     }
 
     // --- Return Response ---
-    return NextResponse.json({ reply: botResponseText });
+    const res = NextResponse.json({ reply: botResponseText });
+    res.headers.set("Cache-Control", "no-store");
+    return res;
   } catch (error) {
     console.error("Error in chatbot API:", error);
     return NextResponse.json(
@@ -121,4 +167,17 @@ export async function POST(request) {
   }
   // Note: MongoDB client connection is typically managed globally by the library,
   // so explicit closing might not be needed here depending on your setup in mongodb.js
+}
+
+// Optional: allow CORS preflight if needed later
+export function OPTIONS() {
+  return new NextResponse(null, {
+    status: 204,
+    headers: {
+      "Access-Control-Allow-Origin": "*",
+      "Access-Control-Allow-Methods": "POST, OPTIONS",
+      "Access-Control-Allow-Headers": "Content-Type",
+      "Cache-Control": "no-store",
+    },
+  });
 }

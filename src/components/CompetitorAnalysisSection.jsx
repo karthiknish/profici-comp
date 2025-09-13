@@ -28,6 +28,12 @@ import {
   JsonList,
   JsonTable,
 } from "@/components/ui/JsonRenderHelpers";
+import KeyMetricHighlight from "@/components/KeyMetricHighlight";
+import {
+  BarChart2 as ChartIcon,
+  Users as UsersIcon,
+  Star as StarIcon,
+} from "lucide-react";
 import CompetitorComparisonBarChart from "@/components/charts/CompetitorComparisonBarChart"; // Import the new chart
 
 // --- Specific Rendering Components for Competitor JSON Structure ---
@@ -227,6 +233,56 @@ const CompetitorAnalysisSection = ({ data }) => {
             variants={{ visible: { transition: { staggerChildren: 0.1 } } }}
             className="space-y-6"
           >
+            {/* Summary metrics if available */}
+            {data.competitorOverview?.rows && (
+              <motion.div variants={itemVariants} custom={-1}>
+                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 mb-2">
+                  <KeyMetricHighlight
+                    label="Competitors"
+                    value={
+                      Array.isArray(data.competitorOverview.rows)
+                        ? data.competitorOverview.rows.length
+                        : undefined
+                    }
+                    icon={UsersIcon}
+                  />
+                  <KeyMetricHighlight
+                    label="Top Authority"
+                    value={(() => {
+                      try {
+                        const max = Math.max(
+                          ...data.competitorOverview.rows
+                            .map((r) => Number(r.authority))
+                            .filter((n) => Number.isFinite(n))
+                        );
+                        return Number.isFinite(max) ? max : undefined;
+                      } catch {
+                        return undefined;
+                      }
+                    })()}
+                    unit="/100"
+                    icon={StarIcon}
+                  />
+                  <KeyMetricHighlight
+                    label="Top Market Share"
+                    value={(() => {
+                      try {
+                        const max = Math.max(
+                          ...data.competitorOverview.rows
+                            .map((r) => Number(r.marketShare))
+                            .filter((n) => Number.isFinite(n))
+                        );
+                        return Number.isFinite(max) ? max : undefined;
+                      } catch {
+                        return undefined;
+                      }
+                    })()}
+                    unit="%"
+                    icon={ChartIcon}
+                  />
+                </div>
+              </motion.div>
+            )}
             {/* Render each section using specific layout and helpers */}
             {data.competitorOverview && (
               <motion.div variants={itemVariants} custom={0}>
@@ -276,7 +332,9 @@ const CompetitorAnalysisSection = ({ data }) => {
                   />
                 </div>
                 {/* Keep the original table as well */}
-                <JsonTable data={data.digitalPresence} />
+                <div className="mt-2">
+                  <JsonTable data={data.digitalPresence} />
+                </div>
                 {data.digitalPresence.notes && (
                   <p className="text-xs italic text-muted-foreground mt-2">
                     {data.digitalPresence.notes}
@@ -291,7 +349,9 @@ const CompetitorAnalysisSection = ({ data }) => {
                   <CreditCard className="mr-2 h-5 w-5 text-primary" />{" "}
                   {data.pricingStrategy.title || "Pricing Strategy"}
                 </h3>
-                <JsonTable data={data.pricingStrategy} />
+                <div className="mt-2">
+                  <JsonTable data={data.pricingStrategy} />
+                </div>
                 {data.pricingStrategy.summary && (
                   <p className="text-sm mt-2">
                     <FormattedText text={data.pricingStrategy.summary} />
@@ -306,7 +366,9 @@ const CompetitorAnalysisSection = ({ data }) => {
                   <MessageSquare className="mr-2 h-5 w-5 text-primary" />{" "}
                   {data.marketingChannels.title || "Marketing Channels"}
                 </h3>
-                <JsonTable data={data.marketingChannels} />
+                <div className="mt-2">
+                  <JsonTable data={data.marketingChannels} />
+                </div>
                 {data.marketingChannels.gapOpportunities?.opportunities && (
                   <div className="mt-3">
                     <h4 className="font-semibold text-sm mb-1">

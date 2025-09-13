@@ -5,24 +5,69 @@ import { ThumbsUp, ThumbsDown, Target, AlertTriangle } from "lucide-react"; // I
 
 // Basic component to render text, handling potential bold markers (**)
 export const FormattedText = ({ text, className = "" }) => {
-  if (typeof text !== "string") {
-    return <span className={className}>{String(text ?? "")}</span>;
+  if (text === null || text === undefined) {
+    return <span className={className}>—</span>; // Em dash for missing
   }
-  // Basic bold handling: split by **, render parts with/without bold style
-  const parts = text.split("**");
-  return (
-    <span className={className}>
-      {parts.map((part, index) =>
-        index % 2 === 1 ? (
-          <strong key={index} className="font-semibold">
-            {part}
-          </strong>
-        ) : (
-          part
-        )
-      )}
-    </span>
-  );
+  if (typeof text !== "string") {
+    return <span className={className}>{String(text)}</span>;
+  }
+
+  // Strip leading markdown heading markers
+  const normalized = text.replace(/^(#+\s*)/, "");
+
+  // Split by markdown-style links and bold markers: **bold** and [label](url)
+  const regex = /(\*\*(.*?)\*\*)|(\[(.*?)\]\((.*?)\))/g;
+  const nodes = [];
+  let last = 0;
+  let match;
+  while ((match = regex.exec(normalized)) !== null) {
+    if (match.index > last) {
+      nodes.push(normalized.slice(last, match.index));
+    }
+    if (match[1]) {
+      // Bold
+      nodes.push(
+        <strong key={`b-${last}`} className="font-semibold">
+          {match[2]}
+        </strong>
+      );
+    } else if (match[3]) {
+      const href = match[5];
+      const label = match[4] || href;
+      if (/^https?:\/\//i.test(href)) {
+        nodes.push(
+          <a
+            key={`a-${last}`}
+            href={href}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="underline text-blue-600 dark:text-blue-400"
+          >
+            {label}
+          </a>
+        );
+      } else {
+        nodes.push(match[0]);
+      }
+    }
+    last = regex.lastIndex;
+  }
+  if (last < normalized.length) {
+    nodes.push(normalized.slice(last));
+  }
+
+  // Convert line breaks to <br /> for readability
+  const withBreaks = nodes.flatMap((node, i) => {
+    if (typeof node === "string" && node.includes("\n")) {
+      const parts = node.split("\n");
+      return parts.flatMap((p, j) =>
+        j < parts.length - 1 ? [p, <br key={`br-${i}-${j}`} />] : [p]
+      );
+    }
+    return [node];
+  });
+
+  return <span className={className}>{withBreaks}</span>;
 };
 
 // Component to render a simple list from an array of strings
@@ -94,7 +139,7 @@ export const JsonTable = ({
                 return (
                   <td
                     key={colIndex}
-                    className="px-4 py-2 whitespace-nowrap text-xs text-gray-700 dark:text-gray-300"
+                                className="px-4 py-2 whitespace-normal align-top text-xs text-gray-700 dark:text-gray-300"
                   >
                     {/* Render arrays as bullet points within the cell */}
                     {Array.isArray(cellData) ? (

@@ -11,6 +11,7 @@ import {
 import { format } from "date-fns";
 import { styles } from "./PdfStyles"; // Import styles
 import { PdfSection } from "./PdfRenderHelpers"; // Import PdfSection helper
+import PdfCompetitorAnalysis from "./PdfCompetitorAnalysis";
 
 // The main PDF document component
 const PdfDocument = ({ analysisResults, submittedData }) => {
@@ -65,6 +66,13 @@ const PdfDocument = ({ analysisResults, submittedData }) => {
 
       {/* Content Pages */}
       <Page size="A4" orientation="landscape" style={styles.landscapePage}>
+        {/* Fixed header for content pages */}
+        <View style={styles.contentHeader} fixed>
+          <Text style={styles.contentHeaderTitle}>Executive Summary & SEO</Text>
+          <Text style={styles.contentHeaderSub}>
+            {companyName} • {website} • {reportDate}
+          </Text>
+        </View>
         <View style={styles.slideContentArea}>
           <PdfSection title="Executive Summary" data={executiveSummaryData} />
           {/* Render SEO sections individually */}
@@ -94,12 +102,26 @@ const PdfDocument = ({ analysisResults, submittedData }) => {
         <Text style={styles.pageNumber} render={renderPageNumber} fixed />
       </Page>
       <Page size="A4" orientation="landscape" style={styles.landscapePage}>
+        <View style={styles.contentHeader} fixed>
+          <Text style={styles.contentHeaderTitle}>Competitor Analysis</Text>
+          <Text style={styles.contentHeaderSub}>
+            {companyName} • {website} • {reportDate}
+          </Text>
+        </View>
         <View style={styles.slideContentArea}>
-          <PdfSection title="Competitor Analysis" data={competitorAnalysis} />
+          <PdfCompetitorAnalysis data={competitorAnalysis} />
         </View>
         <Text style={styles.pageNumber} render={renderPageNumber} fixed />
       </Page>
       <Page size="A4" orientation="landscape" style={styles.landscapePage}>
+        <View style={styles.contentHeader} fixed>
+          <Text style={styles.contentHeaderTitle}>
+            Search Trends & Market Potential
+          </Text>
+          <Text style={styles.contentHeaderSub}>
+            {companyName} • {website} • {reportDate}
+          </Text>
+        </View>
         <View style={styles.slideContentArea}>
           <PdfSection title="Search Trends" data={searchTrends} />
           <PdfSection title="Market Potential" data={marketPotential} />
@@ -107,6 +129,14 @@ const PdfDocument = ({ analysisResults, submittedData }) => {
         <Text style={styles.pageNumber} render={renderPageNumber} fixed />
       </Page>
       <Page size="A4" orientation="landscape" style={styles.landscapePage}>
+        <View style={styles.contentHeader} fixed>
+          <Text style={styles.contentHeaderTitle}>
+            Valuation & Social Media
+          </Text>
+          <Text style={styles.contentHeaderSub}>
+            {companyName} • {website} • {reportDate}
+          </Text>
+        </View>
         <View style={styles.slideContentArea}>
           <PdfSection title="Market Cap & Valuation" data={marketCap} />
           <PdfSection title="Social Media Insights" data={socialMedia} />
@@ -114,6 +144,14 @@ const PdfDocument = ({ analysisResults, submittedData }) => {
         <Text style={styles.pageNumber} render={renderPageNumber} fixed />
       </Page>
       <Page size="A4" orientation="landscape" style={styles.landscapePage}>
+        <View style={styles.contentHeader} fixed>
+          <Text style={styles.contentHeaderTitle}>
+            Strategic Recommendations
+          </Text>
+          <Text style={styles.contentHeaderSub}>
+            {companyName} • {website} • {reportDate}
+          </Text>
+        </View>
         <View style={styles.slideContentArea}>
           {/* Render remaining recommendation sections */}
           {recommendations &&

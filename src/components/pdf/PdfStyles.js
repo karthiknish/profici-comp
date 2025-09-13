@@ -32,7 +32,26 @@ export const styles = StyleSheet.create({
   },
   slideContentArea: {
     flex: 1, // Take up available space between header/footer
-    paddingBottom: 30, // Space for footer
+    paddingTop: 50, // Space for fixed header
+    paddingBottom: 35, // Space for footer and page number
+  },
+  // Fixed header repeated on content pages
+  contentHeader: {
+    position: "absolute",
+    top: 15,
+    left: 40,
+    right: 40,
+    paddingBottom: 6,
+    borderBottomWidth: 0.5,
+    borderBottomColor: proficiColors.border,
+  },
+  contentHeaderTitle: {
+    fontSize: 10,
+    color: proficiColors.secondary,
+  },
+  contentHeaderSub: {
+    fontSize: 9,
+    color: proficiColors.muted,
   },
   section: { marginBottom: 20 }, // Increased spacing between sections
   // Headers & Titles
@@ -107,13 +126,13 @@ export const styles = StyleSheet.create({
     fontSize: 10,
     marginRight: 5,
     marginTop: 1.5,
-    fontFamily: "Noto Color Emoji", // Explicitly use registered Emoji font
+    // Use default font; emojis are resolved via Font.registerEmojiSource
   },
   listItemText: { flex: 1, fontSize: 10, lineHeight: 1.4 },
   // Table Styles - More refined
   table: {
     display: "table",
-    width: "auto", // Let table size itself
+    width: "100%", // Full width for better alignment
     borderStyle: "solid",
     borderWidth: 0.5,
     borderColor: proficiColors.border,

@@ -471,9 +471,8 @@ export const PdfSection = ({ title, data }) => {
   const hasRenderableContent = React.Children.count(renderedContent) > 0;
 
   return (
-    // Use wrap={false} at the section level to try and keep sections together,
-    // but allow internal components like Text and View to wrap by default.
-    <View style={styles.section} wrap={false}>
+    // Allow sections to wrap across pages to avoid overflow errors during rendering.
+    <View style={styles.section}>
       <Text style={styles.sectionTitle}>
         {sectionIcons[title] || ""} {title}
       </Text>
@@ -487,7 +486,7 @@ export const PdfSection = ({ title, data }) => {
       {hasRenderableContent ? (
         renderedContent
       ) : (
-        <Text style={styles.muted}>
+        <Text style={styles.notesText}>
           No specific data available for this section.
         </Text>
       )}

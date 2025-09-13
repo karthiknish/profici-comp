@@ -1,9 +1,52 @@
 import { NextResponse } from "next/server";
 import { connectToDatabase } from "@/lib/mongodb"; // Import the connect function
+import { z } from "zod";
+import { rateLimitCheck, getClientIp } from "@/lib/rateLimit";
+
+export const runtime = "nodejs";
+
+const EmailSchema = z.object({
+  email: z.string().email(),
+});
 
 export async function POST(request) {
   try {
-    const { email } = await request.json();
+    // Rate limit per IP
+    const ip = getClientIp(request.headers);
+    const rl = await rateLimitCheck({
+      key: `chat-email:${ip}`,
+      windowMs: 60_000,
+      max: 10,
+    });
+    if (!rl.ok) {
+      return NextResponse.json(
+        { error: "Rate limit exceeded. Try again shortly." },
+        {
+          status: 429,
+          headers: { "Retry-After": String(Math.ceil(rl.reset / 1000)) },
+        }
+      );
+    }
+
+    // Size guard
+    const raw = await request.text();
+    if (raw.length > 10_000) {
+      return NextResponse.json(
+        { error: "Request body too large" },
+        { status: 413 }
+      );
+    }
+
+    let parsed;
+    try {
+      parsed = raw ? JSON.parse(raw) : {};
+    } catch {
+      return NextResponse.json(
+        { error: "Invalid JSON in request body" },
+        { status: 400 }
+      );
+    }
+    const { email } = EmailSchema.parse(parsed || {});
 
     // Basic validation
     if (
@@ -51,6 +94,18 @@ export async function POST(request) {
       { status: status }
     );
   }
+}
+
+export function OPTIONS() {
+  return new NextResponse(null, {
+    status: 204,
+    headers: {
+      "Access-Control-Allow-Origin": "*",
+      "Access-Control-Allow-Methods": "POST, OPTIONS",
+      "Access-Control-Allow-Headers": "Content-Type",
+      "Cache-Control": "no-store",
+    },
+  });
 }
 
 // Optional: Add a GET handler or other methods if needed, otherwise remove.

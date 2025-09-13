@@ -114,25 +114,77 @@ const ChatbotWidget = () => {
     const currentHistory = messages.slice(-6); // Send last 6 messages
 
     try {
-      const response = await fetch("/api/chatbot", {
+      // Prefer streaming endpoint for better UX
+      const res = await fetch("/api/chatbot/stream", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ message: userMessage, history: currentHistory }),
       });
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || "Failed to get response from bot.");
+      if (
+        res.ok &&
+        res.headers.get("Content-Type")?.includes("text/event-stream")
+      ) {
+        let accumulated = "";
+        const reader = res.body.getReader();
+        const decoder = new TextDecoder();
+        while (true) {
+          const { value, done } = await reader.read();
+          if (done) break;
+          const chunk = decoder.decode(value, { stream: true });
+          // SSE: split by double newline
+          const events = chunk.split("\n\n");
+          for (const evt of events) {
+            if (!evt) continue;
+            // event: ...\n data: ...
+            const dataLine = evt.split("\n").find((l) => l.startsWith("data:"));
+            if (!dataLine) continue;
+            try {
+              const payload = JSON.parse(dataLine.slice(5).trim());
+              if (payload.delta) {
+                accumulated += payload.delta;
+                // Update last bot message or add new one on first chunk
+                setMessages((prev) => {
+                  const next = [...prev];
+                  // If last is bot and we're streaming, append
+                  const last = next[next.length - 1];
+                  if (last && last.sender === "bot") {
+                    last.text += payload.delta;
+                  } else {
+                    next.push({ sender: "bot", text: payload.delta });
+                  }
+                  return next;
+                });
+              } else if (payload.done) {
+                // end of stream
+              }
+            } catch (_) {
+              // ignore parse errors
+            }
+          }
+        }
+      } else {
+        // Fallback to non-streaming
+        const response = await fetch("/api/chatbot", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            message: userMessage,
+            history: currentHistory,
+          }),
+        });
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(
+            errorData.error || "Failed to get response from bot."
+          );
+        }
+        const data = await response.json();
+        setMessages((prev) => [
+          ...prev,
+          { sender: "bot", text: data.reply || "" },
+        ]);
       }
-
-      const data = await response.json();
-      const botResponse = {
-        sender: "bot",
-        text: data.reply || "Sorry, I couldn't process that.",
-      };
-
-      // Add bot response
-      setMessages((prev) => [...prev, botResponse]);
     } catch (error) {
       console.error("Error sending message to chatbot API:", error);
       toast.error("Chatbot Error", { description: error.message });
